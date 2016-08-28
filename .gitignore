@@ -1,4 +1,5 @@
 obj/
+bin/
 
 # Generated Make files:
 *.make
