@@ -98,8 +98,8 @@ public:
 	/// Returns a reference to the specified row
 	std::vector<double>& row(size_t index) { return m_data[index]; }
 
-        /// Returns a const reference to the specified row
-        const std::vector<double>& row(size_t index) const {return m_data[index]; }
+  /// Returns a const reference to the specified row
+	const std::vector<double>& row(size_t index) const {return m_data[index]; }
 
 	/// Returns a reference to the specified row
 	std::vector<double>& operator [](size_t index) { return m_data[index]; }

@@ -5,12 +5,14 @@ workspace "pancakes"
   -- Specify configuration details:
   configuration "Debug"
     targetsuffix "Dbg"
+    prebuildmessage "Building Pancakes in Debug Mode."
     postbuildcommands {
       "sudo mkdir -m 0755 -p /usr/local/include/pancakes/",
       "sudo install src/includes/*.h /usr/local/include/pancakes/"
     }
   configuration "Release"
     targetsuffix ""
+    prebuildmessage "Building Pancakes in Release Mode."
     postbuildcommands {
       "sudo mkdir -m 0755 -p /usr/local/include/pancakes/",
       "sudo install src/includes/*.h /usr/local/include/pancakes/"
