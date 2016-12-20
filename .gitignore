@@ -1,22 +1,2 @@
-obj/
-bin/
-
-# Generated Make files:
-*.make
-Makefile
-
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Compiled Dynamic libraries
-*.so
-
-# Compiled Static libraries
-*.a
-*.lib
+# Ignore Cargo.lock because we are a library:
+Cargo.lock
