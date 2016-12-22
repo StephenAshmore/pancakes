@@ -1,15 +1,24 @@
 // use tensor::traits;
-// pub mod rank1Tensor;
+// pub mod Rank1Tensor;
 use std::ops::{Add, Mul, Index, IndexMut};
+use Tensor::Vector;
 
-pub struct rank1Tensor {
-    m_data: Vec<f64>,
+pub struct Rank1Tensor {
+    m_data: Vector<f64>,
     m_size: u64,
 }
 
-impl rank1Tensor {
+impl Rank1Tensor {
+    /// New Function for creating a Rank1Tensor:
+    pub fn new(s: u64) -> Rank1Tensor {
+        Rank1Tensor {
+            m_data: Vector::build(s, 0.0),
+            m_size: s
+        }
+    }
+
     pub fn zeroes(&mut self, s: u64){
-        self.m_data.resize(s as usize, 0.0);
+        self.m_data.resize(s, 0.0);
         self.m_size = s;
     }
 
@@ -25,7 +34,7 @@ impl rank1Tensor {
 
     pub fn get(&self, indices: u64) -> f64 {
         if indices >= 0 && indices < self.size() {
-            self.m_data[indices as usize]
+            self.m_data[indices]
         }
         else {
             0.0
@@ -34,13 +43,13 @@ impl rank1Tensor {
 
     pub fn set(&mut self, indices: u64, value: f64) {
         if indices >= 0 && indices < self.size() {
-            self.m_data[indices as usize] = value;
+            self.m_data[indices] = value;
         }
     }
 
     pub fn multiply(&mut self, scalar: f64) {
         for i in 0..self.m_size {
-            self.m_data[i as usize] *= scalar;
+            self.m_data[i] *= scalar;
         }
         // for i in 0..self.data.size() {
         //     self.data[i] *= scalar;
@@ -50,7 +59,7 @@ impl rank1Tensor {
     pub fn print(&self) {
         println!("Tensor size: {}", self.m_size);
         for i in 0..self.m_size {
-            print!("{} ", self.m_data[i as usize]);
+            print!("{} ", self.m_data[i]);
         }
         println!("");
     }
@@ -58,44 +67,33 @@ impl rank1Tensor {
 
 //IMPLEMENTATIONS
 /// Inmutable Index operator []
-impl Index<u64> for rank1Tensor {
+impl Index<u64> for Rank1Tensor {
     type Output = f64;
     fn index<'a>(&'a self, _index: u64) -> &f64 {
-        &self.m_data[_index as usize]
+        &self.m_data[_index]
     }
 }
 /// Mutable Index operator []
-impl IndexMut<u64> for rank1Tensor {
+impl IndexMut<u64> for Rank1Tensor {
     fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut f64 {
-        & mut self.m_data[_index as usize]
+        & mut self.m_data[_index]
     }
 }
-/// Clone trait
-impl Clone for rank1Tensor {
-    fn clone(&self) -> rank1Tensor {
-        *self
-    }
-}
+// Clone trait
+// impl Clone for Rank1Tensor {
+//     fn clone(&self) -> Rank1Tensor {
+//         *self
+//     }
+// }
 
-// impl Mul<rank1Tensor> for rank1Tensor {
+// impl Mul<Rank1Tensor> for Rank1Tensor {
 //
 // }
 
-/// New Function for creating a rank1Tensor:
-pub fn new(s: u64) -> rank1Tensor {
-    // println!("Creating new tensor!");
-    let mut newVec = Vec::with_capacity(s as usize);
-    newVec.resize(s as usize, 0.0);
-    rank1Tensor {
-        m_data: newVec,
-        m_size: s
-    }
-}
-
-/// Test Function for rank1Tensor:
+/// Test Function for Rank1Tensor:
 pub fn test() -> bool {
     let mut returnValue = true;
-    let mut test_tensor = new(5);
+    let mut test_tensor = Rank1Tensor::new(5);
     for i in 0..test_tensor.size() {
         if test_tensor.get(i) != 0.0 {
             returnValue = false;
