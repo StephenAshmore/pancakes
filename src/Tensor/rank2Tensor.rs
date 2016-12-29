@@ -1,0 +1,206 @@
+use Tensor::Rank1Tensor;
+use Tensor::Vector;
+
+use std::ops::{Add, Mul, Index, IndexMut};
+
+pub enum Compatibilty {
+    Mul,
+    Add,
+    Sub,
+}
+
+#[derive(Clone)]
+pub struct Rank2Tensor {
+    m_data: Vector<Vector<f64>>,
+    m_rows: u64,
+    m_cols: u64,
+}
+
+impl Rank2Tensor {
+    /// New Function for creating a Rank2Tensor:
+    pub fn new(rows: u64, cols:u64) -> Rank2Tensor {
+        let mut newVec = Vector::new();
+        for i in 0..rows {
+            let mut temp_vec = Vector::with_capacity(cols);
+            temp_vec.resize(cols, 0.0);
+            newVec.push(temp_vec);
+        }
+        Rank2Tensor {
+            m_data: newVec,
+            m_rows: rows,
+            m_cols: cols,
+        }
+    }
+
+    pub fn get(&self, row: u64, col: u64) -> &f64 {
+        &self.m_data[row][col]
+    }
+
+    pub fn set(&mut self, row: u64, col: u64, value: f64) {
+        self.m_data[row][col] = value;
+    }
+
+    pub fn zeroes(&mut self){
+        for i in 0..self.m_rows {
+            for j in 0..self.m_cols {
+                self.m_data[i][j] = 0.0;
+            }
+        }
+    }
+
+    pub fn fill(&mut self, value: f64) {
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                self.m_data[i][j] = value;
+            }
+        }
+    }
+
+    pub fn identity(&mut self) {
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                if i == j {
+                    self.m_data[i][j] = 1.0;
+                }
+                else {
+                    self.m_data[i][j] = 0.0;
+                }
+            }
+        }
+    }
+
+    pub fn multiply(&self, other: &Rank2Tensor) -> Rank2Tensor {
+        assert!(self.compatible(other, Compatibilty::Mul),"Cannot multiply two 2D tensors that aren't compatible.");
+
+        let final_rows = self.rows();
+        let final_cols = other.cols();
+        let mut resultTensor = Rank2Tensor::new(final_rows, final_cols);
+
+        for i in 0..final_rows {
+            for j in 0..final_cols {
+                // Compute dot product at this location:
+                let mut temp = 0.0;
+                for k in 0..self.cols() {
+                    temp += self.get(i,k) * other.get(k,j);
+                }
+                resultTensor.set(i,j, temp);
+            }
+        }
+        resultTensor
+    }
+
+    pub fn add(&self, other: &Rank2Tensor) -> Rank2Tensor {
+        assert!(self.compatible(other, Compatibilty::Add), "Cannot add two 2D Tensors that aren't compatible!");
+
+        let mut resultTensor = Rank2Tensor::new(self.rows(), self.cols());
+
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                resultTensor[i][j] = self[i][j] + other[i][j];
+            }
+        }
+        resultTensor
+    }
+
+    pub fn sub(&self, other: &Rank2Tensor) -> Rank2Tensor {
+        assert!(self.compatible(other, Compatibilty::Sub), "Cannot add two 2D Tensors that aren't compatible!");
+
+        let mut resultTensor = Rank2Tensor::new(self.rows(), self.cols());
+
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                resultTensor[i][j] = self[i][j] - other[i][j];
+            }
+        }
+        resultTensor
+    }
+
+    pub fn scale(&mut self, scalar: f64) {
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                self[i][j] = self[i][j] * scalar;
+            }
+        }
+    }
+
+    pub fn rows(&self) -> u64 {
+        self.m_rows
+    }
+
+    pub fn cols(&self) -> u64 {
+        self.m_cols
+    }
+
+    pub fn size(&self) -> (u64, u64) {
+        (self.m_rows, self.m_cols)
+    }
+
+    pub fn countElements(&self) -> u64 {
+        self.m_rows * self.m_cols
+    }
+
+    pub fn compatible(&self, other: &Rank2Tensor, c: Compatibilty) -> bool {
+        let mut returnValue = false;
+        match c {
+            Compatibilty::Mul => {
+                if other.rows() == self.cols() || other.cols() == self.rows() {
+                    returnValue = true;
+                }
+            },
+            Compatibilty::Add => {
+                if other.rows() == self.rows() && other.cols() == self.cols() {
+                    returnValue = true;
+                }
+            },
+            Compatibilty::Sub => {
+                if other.rows() == self.rows() && other.cols() == self.cols() {
+                    returnValue = true;
+                }
+            },
+        }
+        returnValue
+    }
+    pub fn print(&self) {
+        println!("Tensor Rank 2 rows: {} cols: {}", self.rows(), self.cols());
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                print!("{} ", self.m_data[i][j]);
+            }
+            println!("");
+        }
+        println!("");
+    }
+    /// Test Function for Rank2Tensor:
+    pub fn test() -> bool {
+        let mut returnValue = true;
+        let mut test_tensor = Rank2Tensor::new(5, 5);
+
+        test_tensor.identity();
+        test_tensor.print();
+
+        let mut test_tensor2 = Rank2Tensor::new(5,5);
+        test_tensor2.identity();
+        test_tensor2.scale(2.0);
+        test_tensor.scale(2.0);
+
+        test_tensor2 = test_tensor.multiply(&test_tensor2);
+        test_tensor2.print();
+
+        returnValue
+    }
+}
+
+/// Immutable Index
+impl Index<u64> for Rank2Tensor {
+    type Output = Vector<f64>;
+    fn index<'a>(&'a self, _index: u64) -> &Vector<f64>
+    {
+        &self.m_data[_index]
+    }
+}
+/// Mutable Index
+impl IndexMut<u64> for Rank2Tensor {
+    fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut Vector<f64> {
+        & mut self.m_data[_index]
+    }
+}
