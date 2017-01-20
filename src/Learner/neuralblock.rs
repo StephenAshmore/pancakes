@@ -8,7 +8,7 @@ pub struct NeuralBlock {
 }
 
 impl NeuralBlock {
-
+    
 
     pub fn test() -> bool {
 
