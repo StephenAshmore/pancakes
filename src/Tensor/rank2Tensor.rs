@@ -1,4 +1,3 @@
-use Tensor::Rank1Tensor;
 use Tensor::Vector;
 
 use std::ops::{Add, Mul, Index, IndexMut};
@@ -176,7 +175,13 @@ impl Rank2Tensor {
         let mut test_tensor = Rank2Tensor::new(5, 5);
 
         test_tensor.identity();
-        test_tensor.print();
+        for i in 0..test_tensor.rows() {
+            for j in 0..test_tensor.cols() {
+                if i == j && test_tensor[i][j] != 1.0 {
+                    returnValue = false;
+                }
+            }
+        }
 
         let mut test_tensor2 = Rank2Tensor::new(5,5);
         test_tensor2.identity();
@@ -184,8 +189,13 @@ impl Rank2Tensor {
         test_tensor.scale(2.0);
 
         test_tensor2 = test_tensor.multiply(&test_tensor2);
-        test_tensor2.print();
-
+        for i in 0..test_tensor2.rows() {
+            for j in 0..test_tensor2.cols() {
+                if i == j && test_tensor2[i][j] != 4.0 {
+                    returnValue = false;
+                }
+            }
+        }
         returnValue
     }
 }

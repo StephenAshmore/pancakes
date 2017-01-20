@@ -1,10 +1,16 @@
 mod Tensor;
+mod Learner;
 
 pub fn test() {
     println!("Testing Pancakes, the Neural Network Library built for Rust!");
 
-    Tensor::TensorTest();
+    print!("Tensor Test: ");
+    Tensor::Test();
+    println!("Passed");
 
 
+    print!("Learner Test: ");
+    Learner::Test();
+    println!("Passed");
 
 }
