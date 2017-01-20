@@ -7,7 +7,7 @@ pub struct Vector<T> {
 }
 
 impl<T: Clone> Vector<T> {
-    pub fn new() -> Vector<T> {
+    pub fn new() -> Vector<T>{
         let mut newVec = Vec::new();
         Vector {
             m_data: newVec,
@@ -68,7 +68,7 @@ impl<T: Clone> Index<u64> for Vector<T> {
 /// Mutable Index operator []
 impl<T: Clone> IndexMut<u64> for Vector<T> {
     fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut T {
-        &mut self.m_data[_index as usize]
+        & mut self.m_data[_index as usize]
     }
 }
 

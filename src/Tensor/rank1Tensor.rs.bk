@@ -13,11 +13,11 @@ impl Rank1Tensor {
     pub fn new(s: u64) -> Rank1Tensor {
         Rank1Tensor {
             m_data: Vector::build(s, 0.0),
-            m_size: s,
+            m_size: s
         }
     }
 
-    pub fn zeroes(&mut self, s: u64) {
+    pub fn zeroes(&mut self, s: u64){
         self.m_data.resize(s, 0.0);
         self.m_size = s;
     }
@@ -35,7 +35,8 @@ impl Rank1Tensor {
     pub fn get(&self, indices: u64) -> f64 {
         if indices >= 0 && indices < self.size() {
             self.m_data[indices]
-        } else {
+        }
+        else {
             0.0
         }
     }
@@ -55,7 +56,9 @@ impl Rank1Tensor {
         // }
     }
 
-    pub fn multiply(&self, other: &Rank1Tensor) {}
+    pub fn multiply(&self, other: &Rank1Tensor) {
+        
+    }
 
     pub fn print(&self) {
         println!("Tensor size: {}", self.m_size);
@@ -82,7 +85,7 @@ impl Rank1Tensor {
         // scale tensor:
         test_tensor.scale(2.0);
         for i in 0..test_tensor.size() {
-            if test_tensor.get(i) != ((i as f64) + 1.0) * 2.0 {
+            if test_tensor.get(i) != ((i as f64)+1.0) * 2.0 {
                 returnValue = false;
             }
         }
@@ -102,7 +105,7 @@ impl Index<u64> for Rank1Tensor {
 /// Mutable Index operator []
 impl IndexMut<u64> for Rank1Tensor {
     fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut f64 {
-        &mut self.m_data[_index]
+        & mut self.m_data[_index]
     }
 }
 // Clone trait

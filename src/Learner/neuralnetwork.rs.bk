@@ -8,6 +8,8 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
+
+
     pub fn test() -> bool {
 
 

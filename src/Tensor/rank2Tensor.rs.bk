@@ -17,7 +17,7 @@ pub struct Rank2Tensor {
 
 impl Rank2Tensor {
     /// New Function for creating a Rank2Tensor:
-    pub fn new(rows: u64, cols: u64) -> Rank2Tensor {
+    pub fn new(rows: u64, cols:u64) -> Rank2Tensor {
         let mut newVec = Vector::new();
         for i in 0..rows {
             let mut temp_vec = Vector::with_capacity(cols);
@@ -39,7 +39,7 @@ impl Rank2Tensor {
         self.m_data[row][col] = value;
     }
 
-    pub fn zeroes(&mut self) {
+    pub fn zeroes(&mut self){
         for i in 0..self.m_rows {
             for j in 0..self.m_cols {
                 self.m_data[i][j] = 0.0;
@@ -60,7 +60,8 @@ impl Rank2Tensor {
             for j in 0..self.cols() {
                 if i == j {
                     self.m_data[i][j] = 1.0;
-                } else {
+                }
+                else {
                     self.m_data[i][j] = 0.0;
                 }
             }
@@ -68,8 +69,7 @@ impl Rank2Tensor {
     }
 
     pub fn multiply(&self, other: &Rank2Tensor) -> Rank2Tensor {
-        assert!(self.compatible(other, Compatibilty::Mul),
-                "Cannot multiply two 2D tensors that aren't compatible.");
+        assert!(self.compatible(other, Compatibilty::Mul),"Cannot multiply two 2D tensors that aren't compatible.");
 
         let final_rows = self.rows();
         let final_cols = other.cols();
@@ -80,17 +80,16 @@ impl Rank2Tensor {
                 // Compute dot product at this location:
                 let mut temp = 0.0;
                 for k in 0..self.cols() {
-                    temp += self.get(i, k) * other.get(k, j);
+                    temp += self.get(i,k) * other.get(k,j);
                 }
-                resultTensor.set(i, j, temp);
+                resultTensor.set(i,j, temp);
             }
         }
         resultTensor
     }
 
     pub fn add(&self, other: &Rank2Tensor) -> Rank2Tensor {
-        assert!(self.compatible(other, Compatibilty::Add),
-                "Cannot add two 2D Tensors that aren't compatible!");
+        assert!(self.compatible(other, Compatibilty::Add), "Cannot add two 2D Tensors that aren't compatible!");
 
         let mut resultTensor = Rank2Tensor::new(self.rows(), self.cols());
 
@@ -103,8 +102,7 @@ impl Rank2Tensor {
     }
 
     pub fn sub(&self, other: &Rank2Tensor) -> Rank2Tensor {
-        assert!(self.compatible(other, Compatibilty::Sub),
-                "Cannot add two 2D Tensors that aren't compatible!");
+        assert!(self.compatible(other, Compatibilty::Sub), "Cannot add two 2D Tensors that aren't compatible!");
 
         let mut resultTensor = Rank2Tensor::new(self.rows(), self.cols());
 
@@ -147,17 +145,17 @@ impl Rank2Tensor {
                 if other.rows() == self.cols() || other.cols() == self.rows() {
                     returnValue = true;
                 }
-            }
+            },
             Compatibilty::Add => {
                 if other.rows() == self.rows() && other.cols() == self.cols() {
                     returnValue = true;
                 }
-            }
+            },
             Compatibilty::Sub => {
                 if other.rows() == self.rows() && other.cols() == self.cols() {
                     returnValue = true;
                 }
-            }
+            },
         }
         returnValue
     }
@@ -185,7 +183,7 @@ impl Rank2Tensor {
             }
         }
 
-        let mut test_tensor2 = Rank2Tensor::new(5, 5);
+        let mut test_tensor2 = Rank2Tensor::new(5,5);
         test_tensor2.identity();
         test_tensor2.scale(2.0);
         test_tensor.scale(2.0);
@@ -205,13 +203,14 @@ impl Rank2Tensor {
 /// Immutable Index
 impl Index<u64> for Rank2Tensor {
     type Output = Vector<f64>;
-    fn index<'a>(&'a self, _index: u64) -> &Vector<f64> {
+    fn index<'a>(&'a self, _index: u64) -> &Vector<f64>
+    {
         &self.m_data[_index]
     }
 }
 /// Mutable Index
 impl IndexMut<u64> for Rank2Tensor {
     fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut Vector<f64> {
-        &mut self.m_data[_index]
+        & mut self.m_data[_index]
     }
 }
