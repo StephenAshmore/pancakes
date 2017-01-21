@@ -39,8 +39,17 @@ impl<T: IsFunction> Differentiable for Layer<T> {
         self.m_activation.evaluateRank1(&self.m_net_input, prediction);
     }
 
+    // Okay the number of outputs does not equal the number of weights in the downstream layer
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
+        // unsquash can be done all in one step??
+        let mut unsquash = Rank1Tensor::new(self.m_outputs);
 
+        self.m_blame = self.m_weights.multiplyRank1(previous_error);
+
+        for i in 0..self.m_outputs {
+            self.m_blame[i] = self.m_blame[i] * unsquash[i];
+            error[i] = self.m_blame[i];
+        }
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {
