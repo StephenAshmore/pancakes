@@ -3,7 +3,7 @@ use Tensor::Rank1Tensor;
 use Function::functiontraits::*;
 use Learner::learnertraits::*;
 
-pub struct Layer<T> {
+pub struct Layer<T: IsFunction> {
     m_weights: Rank2Tensor,
     m_bias: Rank1Tensor,
     m_inputs: u64,
@@ -31,7 +31,12 @@ impl<T: IsFunction> Layer<T> {
 
 impl<T: IsFunction> Differentiable for Layer<T> {
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
+        assert!(prediction.size() == self.m_outputs,
+            "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");
         self.m_net_input = self.m_weights.multiplyRank1(input);
+        self.m_net_input = self.m_net_input.add(&self.m_bias);
+
+        self.m_activation.evaluateRank1(&self.m_net_input, prediction);
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
