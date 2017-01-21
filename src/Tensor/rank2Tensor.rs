@@ -1,6 +1,8 @@
 use Tensor::Vector;
+use Tensor::Rank1Tensor;
 
-use std::ops::{Add, Mul, Index, IndexMut};
+
+use std::ops::{Index, IndexMut};
 
 pub enum Compatibilty {
     Mul,
@@ -18,14 +20,14 @@ pub struct Rank2Tensor {
 impl Rank2Tensor {
     /// New Function for creating a Rank2Tensor:
     pub fn new(rows: u64, cols: u64) -> Rank2Tensor {
-        let mut newVec = Vector::new();
+        let mut new_vec = Vector::new();
         for i in 0..rows {
             let mut temp_vec = Vector::with_capacity(cols);
             temp_vec.resize(cols, 0.0);
-            newVec.push(temp_vec);
+            new_vec.push(temp_vec);
         }
         Rank2Tensor {
-            m_data: newVec,
+            m_data: new_vec,
             m_rows: rows,
             m_cols: cols,
         }
@@ -65,6 +67,20 @@ impl Rank2Tensor {
                 }
             }
         }
+    }
+
+    pub fn multiplyRank1(&self, other: &Rank1Tensor) -> Rank1Tensor {
+        assert!(self.cols() == other.size(), "When multiplying Rank2Tensor x Rank1Tensor the Rank2Tensor's number of columns must be equal to the size of the Rank1Tensor.");
+
+        let mut resultTensor = Rank1Tensor::new(self.rows());
+
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                resultTensor[i] = resultTensor[i] + (self[i][j] * other[j]);
+            }
+        }
+
+        resultTensor
     }
 
     pub fn multiply(&self, other: &Rank2Tensor) -> Rank2Tensor {

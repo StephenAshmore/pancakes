@@ -30,8 +30,8 @@ impl<T: IsFunction> Layer<T> {
 }
 
 impl<T: IsFunction> Differentiable for Layer<T> {
-    fn forward(&mut self, feature: &Rank1Tensor, prediction: &mut Rank1Tensor) {
-
+    fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
+        self.m_net_input = self.m_weights.multiplyRank1(input);
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
