@@ -1,3 +1,4 @@
+pub use self::functions::*;
 // pub use self::functiontraits;
 
 pub mod functiontraits;

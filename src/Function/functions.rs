@@ -2,8 +2,15 @@ use Function::functiontraits::*;
 use Tensor::Rank1Tensor;
 use Tensor::Rank2Tensor;
 
+#[derive(Debug, Clone)]
 pub struct TanH {
 
+}
+
+impl TanH {
+    pub fn new() -> TanH {
+        TanH { }
+    }
 }
 
 impl IsFunction for TanH {

@@ -14,7 +14,7 @@ pub struct Layer<T: IsFunction> {
 }
 
 impl<T: IsFunction> Layer<T> {
-    fn new(inputs: u64, outputs: u64, activation: T) -> Layer<T> {
+    pub fn new(inputs: u64, outputs: u64, activation: T) -> Layer<T> {
         assert!((inputs > 0 && outputs > 0), "Inputs and outputs must be 1 or more.");
 
         Layer {
