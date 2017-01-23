@@ -3,6 +3,7 @@
 use std::ops::{Add, Mul, Index, IndexMut};
 use Tensor::Vector;
 
+#[derive(Clone)]
 pub struct Rank1Tensor {
     m_data: Vector<f64>,
     m_size: u64,
@@ -14,6 +15,14 @@ impl Rank1Tensor {
         Rank1Tensor {
             m_data: Vector::build(s, 0.0),
             m_size: s,
+        }
+    }
+
+    pub fn copy(&mut self, other: &Rank1Tensor) {
+        self.m_data.resize(other.m_size, 0.0);
+        self.m_size = other.m_size;
+        for i in 0..self.m_size {
+            self.m_data[i] = other.m_data[i];
         }
     }
 

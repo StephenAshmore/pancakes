@@ -33,6 +33,17 @@ impl Rank2Tensor {
         }
     }
 
+    pub fn copy(&mut self, other: &Rank2Tensor) {
+        self.m_data.resize(other.m_rows, Vector::with_capacity(other.m_cols));
+        self.m_rows = other.m_rows;
+        self.m_cols = other.m_cols;
+        for i in 0..self.m_rows {
+            for j in 0..self.m_cols {
+                self.m_data[i][j] = other.m_data[i][j];
+            }
+        }
+    }
+
     pub fn get(&self, row: u64, col: u64) -> &f64 {
         &self.m_data[row][col]
     }

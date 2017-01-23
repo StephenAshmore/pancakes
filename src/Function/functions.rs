@@ -3,16 +3,12 @@ use Tensor::Rank1Tensor;
 use Tensor::Rank2Tensor;
 
 #[derive(Debug, Clone)]
-pub struct TanH {
-
-}
-
+pub struct TanH{}
 impl TanH {
     pub fn new() -> TanH {
         TanH { }
     }
 }
-
 impl IsFunction for TanH {
     fn evaluate(&self, value: f64) -> f64 {
         value.tanh()
@@ -45,5 +41,20 @@ impl IsFunction for TanH {
             }
         }
     }
+}
 
+pub struct Identity{}
+impl Identity {
+    pub fn new() -> Identity {
+        Identity { }
+    }
+}
+impl IsFunction for Identity {
+    fn evaluate(&self, value: f64) -> f64 { value }
+    fn evaluateRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor) { output.copy(tensor); }
+    fn evaluateRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor) { output.copy(tensor); }
+
+    fn inverse(&self, value: f64) -> f64 { value }
+    fn inverseRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor) { output.copy(tensor); }
+    fn inverseRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor) { output.copy(tensor); }
 }

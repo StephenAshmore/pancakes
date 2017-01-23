@@ -1,6 +1,7 @@
 mod Tensor;
 mod Learner;
 mod Function;
+mod Optimizer;
 
 pub fn test() {
     println!("Testing Pancakes, the Neural Network Library built for Rust!");
