@@ -11,4 +11,6 @@ pub trait Differentiable {
 
     fn inputs(&self) -> u64;
     fn outputs(&self) -> u64;
+
+    fn setInputs(&mut self, new_inputs: u64);
 }

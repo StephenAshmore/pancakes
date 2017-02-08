@@ -19,7 +19,8 @@ pub struct Rank2Tensor {
 
 impl Rank2Tensor {
     /// New Function for creating a Rank2Tensor:
-    pub fn new(rows: u64, cols: u64) -> Rank2Tensor {
+    pub fn new(rows: u64, cols: u64) -> Rank2Tensor
+    {
         let mut new_vec = Vector::new();
         for i in 0..rows {
             let mut temp_vec = Vector::with_capacity(cols);
@@ -30,6 +31,14 @@ impl Rank2Tensor {
             m_data: new_vec,
             m_rows: rows,
             m_cols: cols,
+        }
+    }
+
+    pub fn resize(&mut self, rows: u64, cols: u64)
+    {
+        self.m_data.resize(rows, Vector::new());
+        for i in 0..rows {
+            self.m_data[i].resize(cols, 0.0);
         }
     }
 

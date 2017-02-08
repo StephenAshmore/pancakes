@@ -2,6 +2,8 @@ use Optimizer::optimizertraits::*;
 use Tensor::Rank2Tensor;
 use Tensor::Rank1Tensor;
 
+// equation: (BLAME) * a`(w*x_i)x_i
+
 pub struct GradientDescent {
     m_learning_rate: f64,
 }
