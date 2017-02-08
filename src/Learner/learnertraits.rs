@@ -9,4 +9,6 @@ pub trait Differentiable {
     fn forwardBatch(&mut self, inputs: Rank2Tensor);
     fn backpropBatch(&mut self);
 
+    fn inputs(&self) -> u64;
+    fn outputs(&self) -> u64;
 }
