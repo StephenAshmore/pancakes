@@ -3,6 +3,10 @@ use Tensor::Rank1Tensor;
 use Function::functiontraits::*;
 use Learner::learnertraits::*;
 
+use rand::Rng;
+use rand;
+use rand::distributions::{Range, IndependentSample};
+
 pub struct Layer<T: IsFunction> {
     m_weights: Rank2Tensor,
     m_bias: Rank1Tensor,
@@ -46,18 +50,32 @@ impl<T: IsFunction> Differentiable for Layer<T> {
         println!("Resizing weights to have cols: {}", self.m_inputs);
         self.m_weights.resizeColumns(self.m_inputs);
 
+        // Initialization:
+        // This process should be the same for most activation functions. For ReLu,
+        // they will need to be their own Differentiable type because the weights
+        // will need to be initialized differently for best results.
         // initialize weights:
-        self.m_weights.fillRandom();
+        let mut rng = rand::thread_rng();
+        let range = Range::new(0.0, new_inputs as f64);
+        // silly way to initialize the weights because I can't figure out how to get max to work.
+        let mag1 = 3.0;
+        let mag2 = 1.0 / (new_inputs as f64);
+        let mut mag = mag2;
+        if ( mag1 > mag2 ) {
+            mag = mag1;
+        }
 
-        // dumb way to scale the weights by a max magnitude because I'm slightly drunk and can't be bothered to research why I can't find the max between two floats
-        // let mag1 = 3.0;
-        // let mag2 = 1.0 / (new_inputs as f64);
-        // if ( mag1 > mag2 ) {
-        //     self.m_weights.scale(mag1);
-        // }
-        // else {
-        //     self.m_weights.scale(mag2);
-        // }
+        for i in 0..self.m_weights.rows() {
+            for j in 0..self.m_weights.cols() {
+                self.m_weights[i][j] = range.ind_sample(&mut rng) / (new_inputs as f64).sqrt();
+            }
+        }
+
+        // biases are initialized with zeroes, lets do this explicitely here:
+        self.m_bias.fill(0.0);
+
+        println!("Magnitude: {:?}", mag);
+        println!("Weight Matrix: {:?}", self.m_weights);
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {

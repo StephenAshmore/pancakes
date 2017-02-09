@@ -13,4 +13,6 @@ pub trait Differentiable {
     fn outputs(&self) -> u64;
 
     fn setInputs(&mut self, new_inputs: u64);
+
+    // fn gradient(&mut self);
 }
