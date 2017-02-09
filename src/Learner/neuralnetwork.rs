@@ -139,6 +139,15 @@ impl Differentiable for NeuralNetwork {
 
 
         // actually go through the layers and stuff:
+        // give the correct input to the next layer:
+        // let mut inp = Rank1Tensor::new();
+        for i in 0..self.m_layer_count {
+            // forward into each block with the current input:
+            for j in 0..self.m_blocks[i].len() {
+                // forward input here:
+                // self.m_blocks[i][j].forward()
+            }
+        }
         self.m_blocks[0][0].forward(input, prediction);
 
     }
