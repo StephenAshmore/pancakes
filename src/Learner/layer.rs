@@ -91,17 +91,17 @@ impl<T: IsFunction> Differentiable for Layer<T> {
         self.m_activation.evaluateRank1(&self.m_net_input, prediction);
     }
 
-    // Okay the number of outputs must equal the number of neurons in the downstream layer
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
         // unsquash can be done all in one step??
         let mut unsquash = Rank1Tensor::new(self.m_outputs);
+        // unsquash net input, and multiply by the previous_error:
+        self.m_activation.inverseRank1(&self.m_net_input, &mut unsquash);
 
-        self.m_blame = self.m_weights.multiplyRank1(previous_error);
+        unsquash.multiply(previous_error, &mut self.m_blame);
 
-        for i in 0..self.m_outputs {
-            self.m_blame[i] = self.m_blame[i] * unsquash[i];
-            error[i] = self.m_blame[i];
-        }
+        // this will insure the error for the next layer is properly set.
+        // we no longer need to have access to the downstream layer's weights.
+        error.copy(&self.m_weights.multiplyRank1(&unsquash));
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

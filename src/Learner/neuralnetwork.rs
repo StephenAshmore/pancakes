@@ -174,7 +174,16 @@ impl Differentiable for NeuralNetwork {
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
         // actually go through the layers and stuff:
+        // actually go through the layers and stuff:
+        // give the correct input to the next layer:
+        let mut current_error = Rank1Tensor::new(previous_error.size());
+        current_error.copy(previous_error);
+        for i in self.m_layer_count-1..0 {
 
+            for j in 0..self.m_blocks[i as usize].len() {
+                // give current error to this block and store its backpropagated error
+            }
+        }
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

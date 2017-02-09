@@ -18,6 +18,11 @@ impl Rank1Tensor {
         }
     }
 
+    pub fn resize(&mut self, size: u64) {
+        assert!(size >= 0, "You cannot resize a Rank1Tensor to have a negative size.");
+        self.m_data.resize(size, 0.0);
+    }
+
     pub fn copy(&mut self, other: &Rank1Tensor) {
         self.m_data.resize(other.m_size, 0.0);
         self.m_size = other.m_size;
@@ -72,6 +77,15 @@ impl Rank1Tensor {
         result_tensor
     }
 
+    pub fn sub(&self, other: &Rank1Tensor) -> Rank1Tensor {
+        let mut result_tensor = Rank1Tensor::new(self.m_size);
+        for i in 0..self.m_size {
+            result_tensor[i] = self[i] - other[i];
+        }
+
+        result_tensor
+    }
+
     pub fn scale(&mut self, scalar: f64) {
         for i in 0..self.m_size {
             self.m_data[i] *= scalar;
@@ -81,7 +95,15 @@ impl Rank1Tensor {
         // }
     }
 
-    pub fn multiply(&self, other: &Rank1Tensor) {}
+    pub fn multiply(&self, other: &Rank1Tensor, result: &mut Rank1Tensor) {
+        assert!(self.size() == other.size(), "To multiply two Rank1Tensors they should be the same size.");
+        if ( result.size() != self.size() ) {
+            result.resize(self.size());
+        }
+        for i in 0..self.size() {
+            result[i] = self.m_data[i] * other[i];
+        }
+    }
 
     pub fn print(&self) {
         println!("Tensor size: {}", self.m_size);
