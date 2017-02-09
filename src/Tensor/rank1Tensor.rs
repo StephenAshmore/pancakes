@@ -3,7 +3,7 @@
 use std::ops::{Add, Mul, Index, IndexMut};
 use Tensor::Vector;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rank1Tensor {
     m_data: Vector<f64>,
     m_size: u64,

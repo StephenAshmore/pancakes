@@ -9,6 +9,10 @@ pub trait IsFunction {
     fn inverse(&self, value: f64) -> f64;
     fn inverseRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor);
     fn inverseRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor);
+
+    fn derivative(&self, value: f64) -> f64;
+    fn derivativeRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor);
+    fn derivativeRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor);
 }
 
 pub trait IsCostFunction {

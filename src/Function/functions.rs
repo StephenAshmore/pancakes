@@ -41,6 +41,26 @@ impl IsFunction for TanH {
             }
         }
     }
+
+    fn derivative(&self, value: f64) -> f64
+    {
+        (1.0 - (value.tanh() * value.tanh()))
+    }
+    fn derivativeRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor)
+    {
+        for i in 0..tensor.size() {
+            output[i] = (1.0 - (tensor[i].tanh() * tensor[i].tanh()));
+        }
+    }
+    fn derivativeRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor)
+    {
+        for i in 0..tensor.rows() {
+            for j in 0..tensor.cols() {
+                output[i][j] = (1.0 - (tensor[i][j].tanh() * tensor[i][j].tanh()));
+            }
+        }
+    }
+
 }
 
 pub struct Identity{}
@@ -57,4 +77,17 @@ impl IsFunction for Identity {
     fn inverse(&self, value: f64) -> f64 { value }
     fn inverseRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor) { output.copy(tensor); }
     fn inverseRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor) { output.copy(tensor); }
+
+    fn derivative(&self, value: f64) -> f64
+    {
+        1.0
+    }
+    fn derivativeRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor)
+    {
+        output.fill(1.0);
+    }
+    fn derivativeRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor)
+    {
+        output.fill(1.0);
+    }
 }

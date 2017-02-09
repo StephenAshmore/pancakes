@@ -4,6 +4,10 @@
   version = "0.0.1"
   authors = [ "Stephen Ashmore <stephen@ashmore.io>" ]
 
+
+[dependencies]
+  rand = "0.3"
+
 [lib]
 name = "pancakes"
 # This field points at where the crate is located, relative to the `Cargo.toml`.

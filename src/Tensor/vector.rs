@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Vector<T> {
     m_data: Vec<T>,
     m_size: u64,

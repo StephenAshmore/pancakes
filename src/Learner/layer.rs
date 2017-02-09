@@ -10,7 +10,7 @@ pub struct Layer<T: IsFunction> {
     m_outputs: u64,
     m_activation: T,
     m_net_input: Rank1Tensor,
-    m_blame: Rank1Tensor, // blame here is possibly the gradient? Not sure, need to clarify this.
+    m_blame: Rank1Tensor,
 }
 
 impl<T: IsFunction> Layer<T> {
@@ -43,7 +43,21 @@ impl<T: IsFunction> Differentiable for Layer<T> {
     fn setInputs(&mut self, new_inputs: u64)
     {
         self.m_inputs = new_inputs;
-        self.m_weights.resize(self.m_outputs, self.m_inputs);
+        println!("Resizing weights to have cols: {}", self.m_inputs);
+        self.m_weights.resizeColumns(self.m_inputs);
+
+        // initialize weights:
+        self.m_weights.fillRandom();
+
+        // dumb way to scale the weights by a max magnitude because I'm slightly drunk and can't be bothered to research why I can't find the max between two floats
+        // let mag1 = 3.0;
+        // let mag2 = 1.0 / (new_inputs as f64);
+        // if ( mag1 > mag2 ) {
+        //     self.m_weights.scale(mag1);
+        // }
+        // else {
+        //     self.m_weights.scale(mag2);
+        // }
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
@@ -51,6 +65,8 @@ impl<T: IsFunction> Differentiable for Layer<T> {
             "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");
         assert!(self.m_inputs != 0 && input.size() == self.m_inputs,
             "The input Rank1Tensor must be the same size as the number of inputs in this layer!");
+
+        println!("Weights rows: {} cols: {}. Input size: {}", self.m_weights.rows(), self.m_weights.cols(), input.size());
         self.m_net_input = self.m_weights.multiplyRank1(input);
         self.m_net_input = self.m_net_input.add(&self.m_bias);
 

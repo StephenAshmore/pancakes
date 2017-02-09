@@ -69,6 +69,7 @@ impl NeuralNetwork {
             }
             current_inputs = current_outputs;
         }
+        self.m_outputs = current_outputs;
 
         self.m_ready = true;
     }
@@ -87,13 +88,24 @@ impl NeuralNetwork {
     }
 
     pub fn test() -> bool {
-        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(0.0001)) as Box<Optimizer>);
+        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>);
         // Not the most pleasant syntax for moving a trait object.
         nn.add(Box::new(Layer::new(4, TanH::new())) as Box<Differentiable>);
-        nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
+        //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
 
         let mut input = Rank1Tensor::new(2);
+        input[0] = 2.0;
+        input[1] = 3.0;
 
+        let mut label = Rank1Tensor::new(4);
+        label[0] = 1.0; label[1] = 1.0; label[2] = 2.0; label[3] = 1.0;
+
+        let mut prediction = Rank1Tensor::new(4);
+
+        nn.forward(&input, &mut prediction);
+
+        println!("Prediction: {:?}", prediction);
+        println!("The Target: {:?}", label);
 
         true
     }
@@ -117,6 +129,9 @@ impl Differentiable for NeuralNetwork {
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
+        if ( !self.m_ready ) {
+            self.validate(input.size());
+        }
         assert!(prediction.size() == self.m_outputs,
             "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");
         assert!(self.m_inputs != 0 && input.size() == self.m_inputs,
@@ -124,6 +139,7 @@ impl Differentiable for NeuralNetwork {
 
 
         // actually go through the layers and stuff:
+        self.m_blocks[0][0].forward(input, prediction);
 
     }
 

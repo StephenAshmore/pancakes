@@ -1,6 +1,8 @@
 use Tensor::Vector;
 use Tensor::Rank1Tensor;
-
+use rand::Rng;
+use rand;
+use rand::distributions::{Range, IndependentSample};
 
 use std::ops::{Index, IndexMut};
 
@@ -10,7 +12,7 @@ pub enum Compatibilty {
     Sub,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rank2Tensor {
     m_data: Vector<Vector<f64>>,
     m_rows: u64,
@@ -34,12 +36,36 @@ impl Rank2Tensor {
         }
     }
 
+    pub fn resizeColumns(&mut self, cols: u64)
+    {
+        println!("Rows: {}", self.m_rows);
+        self.m_cols = cols;
+        for i in 0..self.m_rows
+        {
+            self.m_data[i].resize(cols, 0.0);
+        }
+    }
+
+    pub fn fillRandom(&mut self)
+    {
+        let mut rng = rand::thread_rng();
+        let range = Range::new(0.0, 1.0);
+        for i in 0..self.m_rows {
+            for j in 0..self.m_cols {
+                self.m_data[i][j] = range.ind_sample(&mut rng);
+            }
+        }
+    }
+
     pub fn resize(&mut self, rows: u64, cols: u64)
     {
+
         self.m_data.resize(rows, Vector::new());
         for i in 0..rows {
             self.m_data[i].resize(cols, 0.0);
         }
+        self.m_cols = cols;
+        self.m_rows = rows;
     }
 
     pub fn copy(&mut self, other: &Rank2Tensor) {
