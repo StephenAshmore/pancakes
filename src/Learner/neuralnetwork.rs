@@ -154,8 +154,9 @@ impl Differentiable for NeuralNetwork {
         // give the correct input to the next layer:
         let mut current_input = Rank1Tensor::new(input.size());
         current_input.copy(input);
-        let mut current_output = Rank1Tensor::new(self.output_at_layer_count(0));
         for i in 0..self.m_layer_count {
+            let mut current_output = Rank1Tensor::new(self.output_at_layer_count(i));
+
             // forward into each block with the current input:
             let mut start_position = 0;
             for j in 0..self.m_blocks[i as usize].len() {
@@ -166,7 +167,9 @@ impl Differentiable for NeuralNetwork {
                 current_output.copy_slice(&block_output, start_position);
                 start_position += block_output_count;
             }
+            current_input.copy(&current_output);
         }
+        prediction.copy(&current_input);
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
