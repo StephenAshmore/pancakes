@@ -26,6 +26,14 @@ impl Rank1Tensor {
         }
     }
 
+    pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64) {
+        assert!(other.size() < self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
+
+        for i in 0..other.size() {
+            self.m_data[i + start_position] = other[i];
+        }
+    }
+
     pub fn zeroes(&mut self, s: u64) {
         self.m_data.resize(s, 0.0);
         self.m_size = s;

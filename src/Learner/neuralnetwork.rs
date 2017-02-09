@@ -1,5 +1,5 @@
 use Tensor::Rank2Tensor;
-// use Tensor::Vector;
+use Tensor::Vector;
 use Tensor::Rank1Tensor;
 use Learner::Layer;
 use Function::functions::*;
@@ -14,6 +14,7 @@ pub struct NeuralNetwork {
     m_ready: bool,
     m_inputs: u64,
     m_outputs: u64,
+    m_layer_output_counts: Vector<u64>,
 }
 
 impl NeuralNetwork {
@@ -26,6 +27,7 @@ impl NeuralNetwork {
             m_ready: false,
             m_inputs: 0,
             m_outputs: 0,
+            m_layer_output_counts: Vector::new(),
         }
     }
 
@@ -68,6 +70,7 @@ impl NeuralNetwork {
                 current_outputs += self.m_blocks[i as usize][j as usize].outputs();
             }
             current_inputs = current_outputs;
+            self.m_layer_output_counts.push(current_outputs);
         }
         self.m_outputs = current_outputs;
 
@@ -85,6 +88,15 @@ impl NeuralNetwork {
         // {
 
         // }
+    }
+
+    pub fn output_at_layer_count(&self, layer_number: u64) -> u64
+    {
+        assert!(self.m_ready, "You cannot get the output at a layer without first validating the neural network!"); // this assert may change to allow this function to call validate.
+
+        assert!((layer_number >= 0 && layer_number < self.m_layer_count), "You cannot get the layer count for a layer that does not exist.");
+
+        self.m_layer_output_counts[layer_number]
     }
 
     pub fn test() -> bool {
@@ -129,7 +141,7 @@ impl Differentiable for NeuralNetwork {
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
-        if ( !self.m_ready ) {
+        if !self.m_ready {
             self.validate(input.size());
         }
         assert!(prediction.size() == self.m_outputs,
@@ -140,16 +152,21 @@ impl Differentiable for NeuralNetwork {
 
         // actually go through the layers and stuff:
         // give the correct input to the next layer:
-        // let mut inp = Rank1Tensor::new();
+        let mut current_input = Rank1Tensor::new(input.size());
+        current_input.copy(input);
+        let mut current_output = Rank1Tensor::new(self.output_at_layer_count(0));
         for i in 0..self.m_layer_count {
             // forward into each block with the current input:
-            for j in 0..self.m_blocks[i].len() {
+            let mut start_position = 0;
+            for j in 0..self.m_blocks[i as usize].len() {
                 // forward input here:
-                // self.m_blocks[i][j].forward()
+                let block_output_count = self.m_blocks[i as usize][j as usize].outputs();
+                let mut block_output = Rank1Tensor::new(block_output_count);
+                self.m_blocks[i as usize][j as usize].forward(&current_input, &mut block_output);
+                current_output.copy_slice(&block_output, start_position);
+                start_position += block_output_count;
             }
         }
-        self.m_blocks[0][0].forward(input, prediction);
-
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {

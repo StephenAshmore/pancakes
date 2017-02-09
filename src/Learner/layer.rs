@@ -91,7 +91,7 @@ impl<T: IsFunction> Differentiable for Layer<T> {
         self.m_activation.evaluateRank1(&self.m_net_input, prediction);
     }
 
-    // Okay the number of outputs does not equal the number of weights in the downstream layer
+    // Okay the number of outputs must equal the number of neurons in the downstream layer
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
         // unsquash can be done all in one step??
         let mut unsquash = Rank1Tensor::new(self.m_outputs);
