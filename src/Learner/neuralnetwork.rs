@@ -172,6 +172,7 @@ impl Differentiable for NeuralNetwork {
         prediction.copy(&current_input);
     }
 
+// might be really slow: Maybe need reference slice from Rank1Tensor
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
         assert!(self.m_ready == true,
             "You cannot call backprop on a neural network that has not been validated first.");
