@@ -164,7 +164,7 @@ impl Differentiable for NeuralNetwork {
                 let block_output_count = self.m_blocks[i as usize][j as usize].outputs();
                 let mut block_output = Rank1Tensor::new(block_output_count);
                 self.m_blocks[i as usize][j as usize].forward(&current_input, &mut block_output);
-                current_output.copy_slice(&block_output, start_position);
+                current_output.slice_from(&block_output, start_position);
                 start_position += block_output_count;
             }
             current_input.copy(&current_output);
@@ -173,17 +173,39 @@ impl Differentiable for NeuralNetwork {
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
-        // actually go through the layers and stuff:
+        assert!(self.m_ready == true,
+            "You cannot call backprop on a neural network that has not been validated first.");
+
+        assert!(previous_error.size() == self.m_outputs,
+            "The previous error passed to a neural network must have the same size as the number of outputs in the neural network.");
+
         // actually go through the layers and stuff:
         // give the correct input to the next layer:
         let mut current_error = Rank1Tensor::new(previous_error.size());
         current_error.copy(previous_error);
-        for i in self.m_layer_count-1..0 {
 
+        for i in self.m_layer_count-1..0 {
+            let mut error_start_position = 0; let mut next_error_start_position = 0;
+            let mut total_layer_inputs = 0;
+            for k in 0..self.m_blocks[i as usize].len() { total_layer_inputs += self.m_blocks[i as usize][k as usize].inputs(); }
+            let mut next_block_error = Rank1Tensor::new(total_layer_inputs);
             for j in 0..self.m_blocks[i as usize].len() {
+                let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].outputs());
+                single_block_error.copy_slice(&current_error, error_start_position, None);
+                let mut next_single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
+
                 // give current error to this block and store its backpropagated error
+                self.m_blocks[i as usize][j as usize].backprop(&single_block_error, &mut next_single_block_error);
+
+                next_block_error.slice_from(&next_single_block_error, next_error_start_position);
+                next_error_start_position += next_single_block_error.size();
+
+                error_start_position += self.m_blocks[i as usize][j as usize].outputs();
             }
+            current_error.copy(&next_block_error);
         }
+
+        error.copy(&current_error);
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

@@ -31,11 +31,28 @@ impl Rank1Tensor {
         }
     }
 
-    pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64) {
+    pub fn slice_from(&mut self, other: &Rank1Tensor, start_position: u64) {
         assert!(other.size() < self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
 
         for i in 0..other.size() {
             self.m_data[i + start_position] = other[i];
+        }
+    }
+
+    pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64, end_position: Option<u64>) {
+        assert!(other.size() + start_position < self.m_size,
+            "You cannot copy a slice of a Rank1Tensor into another Rank1Tensor if the destination is not big enough!");
+
+        let target_size;
+        if end_position.is_none() {
+            target_size = self.m_size;
+        }
+        else {
+            target_size = end_position.unwrap() - start_position;
+        }
+
+        for i in 0..target_size {
+            self.m_data[i] = other[i + start_position];
         }
     }
 
