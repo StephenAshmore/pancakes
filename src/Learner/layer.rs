@@ -7,18 +7,18 @@ use rand::Rng;
 use rand;
 use rand::distributions::{Range, IndependentSample};
 
-pub struct Layer<T: IsFunction> {
+pub struct Layer {
     m_weights: Rank2Tensor,
     m_bias: Rank1Tensor,
     m_inputs: u64,
     m_outputs: u64,
-    m_activation: T,
     m_net_input: Rank1Tensor,
+    m_net_output: Rank1Tensor,
     m_blame: Rank1Tensor,
 }
 
-impl<T: IsFunction> Layer<T> {
-    pub fn new(neurons: u64, activation: T) -> Layer<T> {
+impl Layer {
+    pub fn new(neurons: u64) -> Layer {
         assert!(neurons > 0, "Inputs and outputs must be 1 or more.");
 
         Layer {
@@ -26,14 +26,14 @@ impl<T: IsFunction> Layer<T> {
             m_bias: Rank1Tensor::new(neurons),
             m_inputs: 1,
             m_outputs: neurons,
-            m_activation: activation,
             m_net_input: Rank1Tensor::new(neurons),
+            m_net_output: Rank1Tensor::new(neurons),
             m_blame: Rank1Tensor::new(neurons),
         }
     }
 }
 
-impl<T: IsFunction> Differentiable for Layer<T> {
+impl Differentiable for Layer {
     fn inputs(&self) -> u64
     {
         self.m_inputs
@@ -88,20 +88,11 @@ impl<T: IsFunction> Differentiable for Layer<T> {
         self.m_net_input = self.m_weights.multiplyRank1(input);
         self.m_net_input = self.m_net_input.add(&self.m_bias);
 
-        self.m_activation.evaluateRank1(&self.m_net_input, prediction);
+        prediction.copy(&self.m_net_input);
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
-        // unsquash can be done all in one step??
-        let mut unsquash = Rank1Tensor::new(self.m_outputs);
-        // unsquash net input, and multiply by the previous_error:
-        self.m_activation.inverseRank1(&self.m_net_input, &mut unsquash);
-
-        unsquash.multiply(previous_error, &mut self.m_blame);
-
-        // this will insure the error for the next layer is properly set.
-        // we no longer need to have access to the downstream layer's weights.
-        error.copy(&self.m_weights.multiplyRank1(&unsquash));
+        error.copy(&self.m_weights.multiplyRank1(&previous_error));
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

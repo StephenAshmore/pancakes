@@ -13,10 +13,12 @@ impl GradientDescent {
     pub fn new(learning_rate: Option<f64>) -> GradientDescent {
         GradientDescent {
             m_learning_rate: learning_rate.unwrap_or(0.00001),
+
         }
     }
 }
 
+// Pass in net_input to this
 impl Optimizer for GradientDescent {
     fn optimize(&mut self, weights: &mut Rank2Tensor, input: &Rank1Tensor, blame: &Rank1Tensor, activation: Box<IsFunction>) {
         // input size should be equal to the number of columns in weights.

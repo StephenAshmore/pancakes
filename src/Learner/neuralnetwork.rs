@@ -4,6 +4,7 @@ use Tensor::Rank1Tensor;
 use Learner::Layer;
 use Function::functions::*;
 use Learner::learnertraits::*;
+use Learner::activation_layer::*;
 use Optimizer::*;
 
 // #[derive(Clone)]
@@ -101,8 +102,10 @@ impl NeuralNetwork {
 
     pub fn test() -> bool {
         let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>);
+
         // Not the most pleasant syntax for moving a trait object.
-        nn.add(Box::new(Layer::new(4, TanH::new())) as Box<Differentiable>);
+        nn.add(Box::new(Layer::new(4)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(4, TanH::new())) as Box<Differentiable>);
         //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
 
         let mut input = Rank1Tensor::new(2);

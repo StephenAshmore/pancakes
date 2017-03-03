@@ -42,6 +42,7 @@ impl IsFunction for TanH {
         }
     }
 
+// TODO: make value be the f(x)
     fn derivative(&self, value: f64) -> f64
     {
         (1.0 - (value.tanh() * value.tanh()))
