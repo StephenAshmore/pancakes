@@ -1,7 +1,7 @@
 use Optimizer::optimizertraits::*;
 use Tensor::Rank2Tensor;
 use Tensor::Rank1Tensor;
-use Function::functiontraits::IsFunction;
+use Function::functiontraits::*;
 
 // equation: (BLAME) * a`(w*x_i)x_i
 
@@ -13,7 +13,6 @@ impl GradientDescent {
     pub fn new(learning_rate: Option<f64>) -> GradientDescent {
         GradientDescent {
             m_learning_rate: learning_rate.unwrap_or(0.00001),
-
         }
     }
 }

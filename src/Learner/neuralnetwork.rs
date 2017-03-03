@@ -6,12 +6,15 @@ use Function::functions::*;
 use Learner::learnertraits::*;
 use Learner::activation_layer::*;
 use Optimizer::*;
+use Function::functiontraits::*;
+use Function::costfunctions::*;
 
 // #[derive(Clone)]
 pub struct NeuralNetwork {
     m_blocks: Vec<Vec<Box<Differentiable>>>,
     m_layer_count: u64,
     m_optimizer: Box<Optimizer>,
+    m_cost_function: Box<IsCostFunction>,
     m_ready: bool,
     m_inputs: u64,
     m_outputs: u64,
@@ -19,12 +22,13 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
-    pub fn new(optimizer: Box<Optimizer>) -> NeuralNetwork
+    pub fn new(optimizer: Box<Optimizer>, cost_function: Box<IsCostFunction>) -> NeuralNetwork
     {
         NeuralNetwork {
             m_blocks: Vec::new(),
             m_layer_count: 0,
             m_optimizer: optimizer,
+            m_cost_function: cost_function,
             m_ready: false,
             m_inputs: 0,
             m_outputs: 0,
@@ -101,7 +105,7 @@ impl NeuralNetwork {
     }
 
     pub fn test() -> bool {
-        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>);
+        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>, Box::new(SSE::new()) as Box<IsCostFunction>);
 
         // Not the most pleasant syntax for moving a trait object.
         nn.add(Box::new(Layer::new(4)) as Box<Differentiable>);
@@ -121,6 +125,14 @@ impl NeuralNetwork {
 
         println!("Prediction: {:?}", prediction);
         println!("The Target: {:?}", label);
+
+        // calculate error of network:
+        let mut error = nn.m_cost_function.evaluateRank1(&label, &prediction);
+        let mut next_error = Rank1Tensor::new(nn.inputs());
+        nn.backprop(&error, &mut next_error);
+
+        println!("Error: {:?}", error);
+        
 
         true
     }

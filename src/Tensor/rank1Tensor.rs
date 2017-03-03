@@ -94,6 +94,15 @@ impl Rank1Tensor {
         result_tensor
     }
 
+    pub fn subSquare(&self, other: &Rank1Tensor) -> Rank1Tensor {
+        let mut result_tensor = Rank1Tensor::new(self.m_size);
+        for i in 0..self.m_size {
+            result_tensor[i] = (self[i] - other[i]) * (self[i] - other[i]);
+        }
+
+        result_tensor
+    }
+
     pub fn sub(&self, other: &Rank1Tensor) -> Rank1Tensor {
         let mut result_tensor = Rank1Tensor::new(self.m_size);
         for i in 0..self.m_size {

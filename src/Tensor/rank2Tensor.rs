@@ -164,6 +164,20 @@ impl Rank2Tensor {
         resultTensor
     }
 
+    pub fn subSquare(&self, other: &Rank2Tensor) -> Rank2Tensor {
+        assert!(self.compatible(other, Compatibilty::Sub),
+                "Cannot add two 2D Tensors that aren't compatible!");
+
+        let mut resultTensor = Rank2Tensor::new(self.rows(), self.cols());
+
+        for i in 0..self.rows() {
+            for j in 0..self.cols() {
+                resultTensor[i][j] = (self[i][j] - other[i][j]) * (self[i][j] - other[i][j]);
+            }
+        }
+        resultTensor
+    }
+
     pub fn sub(&self, other: &Rank2Tensor) -> Rank2Tensor {
         assert!(self.compatible(other, Compatibilty::Sub),
                 "Cannot add two 2D Tensors that aren't compatible!");
