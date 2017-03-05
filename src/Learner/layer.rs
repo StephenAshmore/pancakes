@@ -2,6 +2,7 @@ use Tensor::Rank2Tensor;
 use Tensor::Rank1Tensor;
 use Function::functiontraits::*;
 use Learner::learnertraits::*;
+use Optimizer::optimizertraits::Optimizer;
 
 use rand::Rng;
 use rand;
@@ -61,7 +62,7 @@ impl Differentiable for Layer {
         let mag1 = 3.0;
         let mag2 = 1.0 / (new_inputs as f64);
         let mut mag = mag2;
-        if ( mag1 > mag2 ) {
+        if mag1 > mag2 {
             mag = mag1;
         }
 
@@ -84,7 +85,7 @@ impl Differentiable for Layer {
         assert!(self.m_inputs != 0 && input.size() == self.m_inputs,
             "The input Rank1Tensor must be the same size as the number of inputs in this layer!");
 
-        println!("Weights rows: {} cols: {}. Input size: {}", self.m_weights.rows(), self.m_weights.cols(), input.size());
+        // println!("Weights rows: {} cols: {}. Input size: {}", self.m_weights.rows(), self.m_weights.cols(), input.size());
         self.m_net_input = self.m_weights.multiplyRank1(input);
         self.m_net_input = self.m_net_input.add(&self.m_bias);
 
@@ -92,8 +93,15 @@ impl Differentiable for Layer {
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
-        error.copy(&self.m_weights.multiplyRank1(&previous_error));
+        self.m_blame.copy(&self.m_weights.multiplyRank1(&previous_error));
+        error.copy(&self.m_blame);
     }
+
+    fn update(&mut self, optimizer: &mut Box<Optimizer>)
+    {
+        optimizer.optimize(&mut self.m_weights, &self.m_net_input, &self.m_blame);
+    }
+
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {
 

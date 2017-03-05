@@ -82,17 +82,59 @@ impl NeuralNetwork {
         self.m_ready = true;
     }
 
+    // pub fn converged() {
+
+    // }
+
     // TRAIN method for Neural network
     pub fn train(&mut self, features: &Rank2Tensor, labels: &Rank2Tensor)
     {
+        if !self.m_ready {
+            self.validate(features.cols());
+        }
+        assert!(self.m_inputs == features.cols(), "Features must have the same number of columns as the number of inputs to the neural network.");
+        assert!(self.m_outputs == labels.cols(), "Labels must have the same number of columns as the number of outputs to the neural network.");
+
         // iterate until fully trained
+        // while !self.converged() {
+        for i in 0..10000 {
+            // randomly iterate through training set
 
-        // randomly iterate through training set
+            // for row in 0..features.size()
+            // {
+            let mut prediction = Rank1Tensor::new(self.m_outputs);
 
-        // for row in 0..features.size()
-        // {
+            // println!("Begin nn.forward.");
+            self.forward(&features[0], &mut prediction);
 
-        // }
+            // println!("Prediction: {:?}", prediction);
+            // println!("The Target: {:?}", labels[0]);
+
+            // calculate error of network:
+            let mut error = self.m_cost_function.evaluateRank1(&labels[0], &prediction);
+            let mut next_error = Rank1Tensor::new(self.inputs());
+            self.backprop(&error, &mut next_error); // next_error unused
+
+            // println!("Error: {:?}", error);
+
+            for i in 0..self.m_layer_count {
+                for j in 0..self.m_blocks[i as usize].len() {
+                    self.m_blocks[i as usize][j as usize].update(&mut self.m_optimizer);
+                }
+            }
+            // optimize the weights:
+            // nn.optimize();
+            // how do we call the appropriate "update weights" step?
+            // how will the neural net train call this for all of its constituent parts?
+            // should we have an update weights or optimize method for Differentiable?
+
+            // }
+        }
+    }
+
+    pub fn layers(&self) -> u64
+    {
+        self.m_layer_count
     }
 
     pub fn output_at_layer_count(&self, layer_number: u64) -> u64
@@ -108,31 +150,27 @@ impl NeuralNetwork {
         let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>, Box::new(SSE::new()) as Box<IsCostFunction>);
 
         // Not the most pleasant syntax for moving a trait object.
-        nn.add(Box::new(Layer::new(4)) as Box<Differentiable>);
-        nn.add(Box::new(Activation_Layer::new(4, TanH::new())) as Box<Differentiable>);
+        nn.add(Box::new(Layer::new(2)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
         //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
 
-        let mut input = Rank1Tensor::new(2);
-        input[0] = 2.0;
-        input[1] = 3.0;
+        let mut features = Rank2Tensor::new(1, 3);
+        features[0][0] = -1.0;
+        features[0][1] = 0.5;
+        features[0][2] = 2.0;
 
-        let mut label = Rank1Tensor::new(4);
-        label[0] = 1.0; label[1] = 1.0; label[2] = 2.0; label[3] = 1.0;
+        // test feed forward!
+        let mut labels = Rank2Tensor::new(1, 2);
+        labels[0][0] = 0.24491866;labels[0][1] = -0.3363755;
 
-        let mut prediction = Rank1Tensor::new(4);
+        let mut prediction = Rank1Tensor::new(labels.cols());
 
-        nn.forward(&input, &mut prediction);
+        nn.forward(&features[0], &mut prediction);
+        println!("Final prediction: {:?}", prediction);
+        println!("Final error vector:: {:?}", nn.m_cost_function.evaluateRank1(&labels[0], &prediction) );
 
-        println!("Prediction: {:?}", prediction);
-        println!("The Target: {:?}", label);
+        nn.train(&features, &labels);
 
-        // calculate error of network:
-        let mut error = nn.m_cost_function.evaluateRank1(&label, &prediction);
-        let mut next_error = Rank1Tensor::new(nn.inputs());
-        nn.backprop(&error, &mut next_error);
-
-        println!("Error: {:?}", error);
-        
 
         true
     }
@@ -155,7 +193,8 @@ impl Differentiable for NeuralNetwork {
         self.validate(new_inputs);
     }
 
-    fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
+    fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor)
+    {
         if !self.m_ready {
             self.validate(input.size());
         }
@@ -223,6 +262,17 @@ impl Differentiable for NeuralNetwork {
 
         error.copy(&current_error);
     }
+
+    fn update(&mut self, optimizer: &mut Box<Optimizer>)
+    {
+        // iterate through all blocks, call update on them.
+        for i in 0..self.layers() {
+            for j in 0..self.m_blocks[i as usize].len() {
+                self.m_blocks[i as usize][j as usize].update(optimizer);
+            }
+        }
+    }
+
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {
 

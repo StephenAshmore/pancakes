@@ -14,7 +14,7 @@ pub enum Compatibilty {
 
 #[derive(Clone, Debug)]
 pub struct Rank2Tensor {
-    m_data: Vector<Vector<f64>>,
+    m_data: Vector<Rank1Tensor>,
     m_rows: u64,
     m_cols: u64,
 }
@@ -25,8 +25,7 @@ impl Rank2Tensor {
     {
         let mut new_vec = Vector::new();
         for i in 0..rows {
-            let mut temp_vec = Vector::with_capacity(cols);
-            temp_vec.resize(cols, 0.0);
+            let mut temp_vec = Rank1Tensor::new(cols);
             new_vec.push(temp_vec);
         }
         Rank2Tensor {
@@ -42,7 +41,7 @@ impl Rank2Tensor {
         self.m_cols = cols;
         for i in 0..self.m_rows
         {
-            self.m_data[i].resize(cols, 0.0);
+            self.m_data[i].resize(cols);
         }
     }
 
@@ -59,17 +58,16 @@ impl Rank2Tensor {
 
     pub fn resize(&mut self, rows: u64, cols: u64)
     {
-
-        self.m_data.resize(rows, Vector::new());
+        self.m_data.resize(rows, Rank1Tensor::new(cols));
         for i in 0..rows {
-            self.m_data[i].resize(cols, 0.0);
+            self.m_data[i].resize(cols);
         }
         self.m_cols = cols;
         self.m_rows = rows;
     }
 
     pub fn copy(&mut self, other: &Rank2Tensor) {
-        self.m_data.resize(other.m_rows, Vector::with_capacity(other.m_cols));
+        self.m_data.resize(other.m_rows, Rank1Tensor::new(other.cols()));
         self.m_rows = other.m_rows;
         self.m_cols = other.m_cols;
         for i in 0..self.m_rows {
@@ -280,14 +278,14 @@ impl Rank2Tensor {
 
 /// Immutable Index
 impl Index<u64> for Rank2Tensor {
-    type Output = Vector<f64>;
-    fn index<'a>(&'a self, _index: u64) -> &Vector<f64> {
+    type Output = Rank1Tensor;
+    fn index<'a>(&'a self, _index: u64) -> &Rank1Tensor {
         &self.m_data[_index]
     }
 }
 /// Mutable Index
 impl IndexMut<u64> for Rank2Tensor {
-    fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut Vector<f64> {
+    fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut Rank1Tensor {
         &mut self.m_data[_index]
     }
 }

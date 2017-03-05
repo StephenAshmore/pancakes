@@ -19,13 +19,15 @@ impl GradientDescent {
 
 // Pass in net_input to this
 impl Optimizer for GradientDescent {
-    fn optimize(&mut self, weights: &mut Rank2Tensor, input: &Rank1Tensor, blame: &Rank1Tensor, activation: Box<IsFunction>) {
+    // what should input be?
+    fn optimize(&mut self, weights: &mut Rank2Tensor, input: &Rank1Tensor, blame: &Rank1Tensor) {
         // input size should be equal to the number of columns in weights.
-        assert!(weights.cols() == input.size(), "The number of inputs must equal the columns of the weights for gradient descent to make sense.");
+        // assert!(weights.cols() == input.size(), "The number of inputs must equal the columns of the weights for gradient descent to make sense.");
 
         for i in 0..weights.rows() {
             for j in 0..weights.cols() {
-                weights[i][j] -= self.m_learning_rate * ( blame[i] * (activation.derivative( weights[i][j] * input[j] )) * input[j]);
+                // what should I do here?
+                weights[i][j] += self.m_learning_rate * blame[i] * input[i];
             }
         }
     }

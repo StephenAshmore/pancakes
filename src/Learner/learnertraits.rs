@@ -1,4 +1,5 @@
 use Tensor::*;
+use Optimizer::optimizertraits::Optimizer;
 
 // Should the error and previous_error here be a Rank1Tensor or Rank2Tensor?
 
@@ -14,5 +15,5 @@ pub trait Differentiable {
 
     fn setInputs(&mut self, new_inputs: u64);
 
-    // fn gradient(&mut self);
+    fn update(&mut self, optimizer: &mut Box<Optimizer>);
 }

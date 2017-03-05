@@ -3,5 +3,5 @@ use Tensor::Rank2Tensor;
 use Function::functiontraits::IsFunction;
 
 pub trait Optimizer {
-    fn optimize(&mut self, weights: &mut Rank2Tensor, input: &Rank1Tensor, blame: &Rank1Tensor, activation: Box<IsFunction>);
+    fn optimize(&mut self, weights: &mut Rank2Tensor, input: &Rank1Tensor, blame: &Rank1Tensor);
 }

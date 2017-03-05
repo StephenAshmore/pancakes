@@ -50,14 +50,14 @@ impl IsFunction for TanH {
     fn derivativeRank1(&self, tensor: &Rank1Tensor, output: &mut Rank1Tensor)
     {
         for i in 0..tensor.size() {
-            output[i] = (1.0 - (tensor[i].tanh() * tensor[i].tanh()));
+            output[i] = 1.0 - (tensor[i].tanh() * tensor[i].tanh());
         }
     }
     fn derivativeRank2(&self, tensor: &Rank2Tensor, output: &mut Rank2Tensor)
     {
         for i in 0..tensor.rows() {
             for j in 0..tensor.cols() {
-                output[i][j] = (1.0 - (tensor[i][j].tanh() * tensor[i][j].tanh()));
+                output[i][j] = 1.0 - (tensor[i][j].tanh() * tensor[i][j].tanh());
             }
         }
     }

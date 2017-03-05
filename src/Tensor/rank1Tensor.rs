@@ -32,7 +32,7 @@ impl Rank1Tensor {
     }
 
     pub fn slice_from(&mut self, other: &Rank1Tensor, start_position: u64) {
-        assert!(other.size() < self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
+        assert!(other.size() <= self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
 
         for i in 0..other.size() {
             self.m_data[i + start_position] = other[i];
@@ -123,7 +123,7 @@ impl Rank1Tensor {
 
     pub fn multiply(&self, other: &Rank1Tensor, result: &mut Rank1Tensor) {
         assert!(self.size() == other.size(), "To multiply two Rank1Tensors they should be the same size.");
-        if ( result.size() != self.size() ) {
+        if result.size() != self.size() {
             result.resize(self.size());
         }
         for i in 0..self.size() {

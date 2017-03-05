@@ -2,6 +2,7 @@ use Tensor::Rank2Tensor;
 use Tensor::Rank1Tensor;
 use Function::functiontraits::*;
 use Learner::learnertraits::*;
+use Optimizer::optimizertraits::Optimizer;
 
 use rand::Rng;
 use rand;
@@ -69,6 +70,12 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         // we no longer need to have access to the downstream layer's weights.
         error.copy(&unsquash);
     }
+
+    fn update(&mut self, optimizer: &mut Box<Optimizer>)
+    {
+        // do nothing
+    }
+
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {
 
