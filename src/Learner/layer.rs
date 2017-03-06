@@ -119,6 +119,9 @@ impl Differentiable for Layer {
         prediction.copy(&self.m_net_input);
     }
 
+// the gradient tensor should be of the same size as the number of weights.
+// Shouldn't it be a rank2tensor because the gradient specifies how each of the weights/parameters
+// change?
 
 // ehhhhh this should be different. see backprop step: http://uaf46365.ddns.uark.edu/ml/a4/instructions.html
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
