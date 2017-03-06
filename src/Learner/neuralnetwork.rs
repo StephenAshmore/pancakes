@@ -51,13 +51,20 @@ impl NeuralNetwork {
         self.m_ready = false;
     }
 
+    pub fn get_block(&mut self, layer: u64, block: u64) -> &mut Box<Differentiable>
+    {
+        assert!((layer >= 0 && layer < self.m_layer_count), "You can't get a layer that isn't in the neural network.");
+        assert!((block >= 0 && (block as usize) < (self.m_blocks[layer as usize].len())), "You can't get a block that isn't in a layer.");
+
+        &mut self.m_blocks[layer as usize][block as usize]
+    }
+
     pub fn concatAtPosition(&mut self, block: Box<Differentiable>, pos: u64)
     {
         assert!(pos < self.m_layer_count, "You can only concatenate blocks at a position less than the number of layers in the neural network.");
 
         self.m_blocks[(pos) as usize].push(block);
         self.m_ready = false;
-
     }
 
     pub fn validate(&mut self, global_inputs: u64)
@@ -150,27 +157,40 @@ impl NeuralNetwork {
         let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>, Box::new(SSE::new()) as Box<IsCostFunction>);
 
         // Not the most pleasant syntax for moving a trait object.
+        nn.add(Box::new(Layer::new(3)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
         nn.add(Box::new(Layer::new(2)) as Box<Differentiable>);
         nn.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
         //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
 
-        let mut features = Rank2Tensor::new(1, 3);
-        features[0][0] = -1.0;
-        features[0][1] = 0.5;
-        features[0][2] = 2.0;
+        // test code:
+        let mut layer1_weights = Rank2Tensor::new(2, 3);
+        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;layer1_weights[0][2] = 0.1;
+        layer1_weights[1][0] = 0.1;layer1_weights[1][1] = 0.3;layer1_weights[1][2] = -0.1;
+        let mut layer1_bias = Rank2Tensor::new(1, 2);
+        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = -0.2;
+
+        // set weights of the two layers:
+        let mut layer1_weights_vec = Vec::new();
+        nn.get_block(0,0).set_weights(Vec::new);
+
+        let mut features = Rank2Tensor::new(1, 2);
+        features[0][0] = 0.3;
+        features[0][1] = -0.2;
 
         // test feed forward!
         let mut labels = Rank2Tensor::new(1, 2);
-        labels[0][0] = 0.24491866;labels[0][1] = -0.3363755;
+        labels[0][0] = 0.1; labels[0][1] = 0.0;
 
         let mut prediction = Rank1Tensor::new(labels.cols());
+        // set the weights of the network:
+
 
         nn.forward(&features[0], &mut prediction);
         println!("Final prediction: {:?}", prediction);
-        println!("Final error vector:: {:?}", nn.m_cost_function.evaluateRank1(&labels[0], &prediction) );
+        println!("Final error vector:: {:?}", nn.m_cost_function.evaluateRank1(&labels[0], &prediction));
 
         nn.train(&features, &labels);
-
 
         true
     }
@@ -191,6 +211,12 @@ impl Differentiable for NeuralNetwork {
     {
         self.m_inputs = new_inputs;
         self.validate(new_inputs);
+    }
+
+    fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
+    {
+        // This one will be a bit more complicated to handle.
+        // For now, do nothing.
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor)

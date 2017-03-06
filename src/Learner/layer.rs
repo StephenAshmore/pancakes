@@ -32,6 +32,15 @@ impl Layer {
             m_blame: Rank1Tensor::new(neurons),
         }
     }
+
+    pub fn weights(&mut self) -> &mut Rank2Tensor
+    {
+        &mut self.m_weights
+    }
+    pub fn print_weights(&self)
+    {
+        println!("Layer Weights: {:?}", self.m_weights);
+    }
 }
 
 impl Differentiable for Layer {
@@ -73,10 +82,21 @@ impl Differentiable for Layer {
         }
 
         // biases are initialized with zeroes, lets do this explicitely here:
-        self.m_bias.fill(0.0);
+        // self.m_bias.fill(0.0);
 
-        println!("Magnitude: {:?}", mag);
-        println!("Weight Matrix: {:?}", self.m_weights);
+
+
+        // println!("Magnitude: {:?}", mag);
+        // println!("Weight Matrix: {:?}", self.m_weights);
+    }
+
+    fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
+    {
+        assert!(weights.len() > 1, "You can't set weights using an empty vector, you must include the bias as the second Rank2Tensor.");
+        assert!(weights[0].rows() == self.m_weights.rows(), "Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
+        assert!(weights[0].cols() == self.m_weights.cols(),"Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
+        self.m_weights.copy(&weights[0]);
+        self.m_weights.copy(&weights[1][0]);
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
@@ -101,7 +121,6 @@ impl Differentiable for Layer {
     {
         optimizer.optimize(&mut self.m_weights, &self.m_net_input, &self.m_blame);
     }
-
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {
 

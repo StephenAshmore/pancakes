@@ -48,6 +48,12 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         self.m_inputs = new_inputs;
     }
 
+    fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
+    {
+        // do nothing for activation layers.
+        // Maybe in the future we will implement activation functions that require weights
+    }
+
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
         assert!(prediction.size() == self.m_outputs,
             "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");

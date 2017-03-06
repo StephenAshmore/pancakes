@@ -14,6 +14,7 @@ pub trait Differentiable {
     fn outputs(&self) -> u64;
 
     fn setInputs(&mut self, new_inputs: u64);
+    fn set_weights(&mut self, weights: &Vec<Rank2Tensor>);
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>);
 }
