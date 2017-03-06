@@ -153,6 +153,7 @@ impl NeuralNetwork {
         self.m_layer_output_counts[layer_number]
     }
 
+// Todo:
     pub fn test() -> bool {
         let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>, Box::new(SSE::new()) as Box<IsCostFunction>);
 
@@ -164,15 +165,30 @@ impl NeuralNetwork {
         //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
 
         // test code:
-        let mut layer1_weights = Rank2Tensor::new(2, 3);
-        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;layer1_weights[0][2] = 0.1;
-        layer1_weights[1][0] = 0.1;layer1_weights[1][1] = 0.3;layer1_weights[1][2] = -0.1;
-        let mut layer1_bias = Rank2Tensor::new(1, 2);
-        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = -0.2;
+        let mut layer1_weights = Rank2Tensor::new(3,2);
+        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;
+        layer1_weights[1][0] = 0.0;layer1_weights[1][1] = 0.0;
+        layer1_weights[2][0] = 0.1;layer1_weights[2][1] = -0.1;
+        let mut layer1_bias = Rank2Tensor::new(1,3);
+        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = 0.1;layer1_bias[0][2] = 0.0;
+
+        let mut layer2_weights = Rank2Tensor::new(2, 3);
+        layer2_weights[0][0] = 0.1;layer2_weights[0][1] = 0.1;layer2_weights[0][2] = 0.1;
+        layer2_weights[1][0] = 0.1;layer2_weights[1][1] = 0.3;layer2_weights[1][2] = -0.1;
+        let mut layer2_bias = Rank2Tensor::new(1, 2);
+        layer2_bias[0][0] = 0.1;layer2_bias[0][1] = -0.2;
 
         // set weights of the two layers:
-        let mut layer1_weights_vec = Vec::new();
-        nn.get_block(0,0).set_weights(Vec::new);
+        let mut layer1_vec = Vec::new();
+        layer1_vec.push(layer1_weights);layer1_vec.push(layer1_bias);
+        let mut layer2_vec = Vec::new();
+        layer2_vec.push(layer2_weights);layer2_vec.push(layer2_bias);
+
+        // validate neural network:
+        nn.validate(2);
+
+        nn.get_block(0,0).set_weights(&layer1_vec);
+        nn.get_block(2,0).set_weights(&layer2_vec);//skip activation layer
 
         let mut features = Rank2Tensor::new(1, 2);
         features[0][0] = 0.3;
@@ -185,12 +201,21 @@ impl NeuralNetwork {
         let mut prediction = Rank1Tensor::new(labels.cols());
         // set the weights of the network:
 
-
         nn.forward(&features[0], &mut prediction);
+        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
         println!("Final prediction: {:?}", prediction);
-        println!("Final error vector:: {:?}", nn.m_cost_function.evaluateRank1(&labels[0], &prediction));
+        println!("Final error vector:: {:?}", error);
 
-        nn.train(&features, &labels);
+        println!("BACKPROP STEP");
+        let mut input_error = Rank1Tensor::new(nn.inputs());
+        nn.backprop(&error, &mut input_error);
+
+        let mut layer1_gradient = nn.m_blocks[0][0].first_gradient();
+        let mut layer2_gradient = nn.m_blocks[2][0].first_gradient();
+        println!("Layer1 Gradient: {:?}", layer1_gradient);
+        println!("Layer2 Gradient: {:?}", layer2_gradient);
+
+        // nn.train(&features, &labels);
 
         true
     }
@@ -217,6 +242,12 @@ impl Differentiable for NeuralNetwork {
     {
         // This one will be a bit more complicated to handle.
         // For now, do nothing.
+    }
+
+    fn first_gradient(&self) -> Rank1Tensor
+    {
+        assert!(self.m_ready, "The neural network must be validated before calling the first_gradient.");
+        self.m_blocks[0][0].first_gradient()
     }
 
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor)
@@ -253,7 +284,8 @@ impl Differentiable for NeuralNetwork {
     }
 
 // might be really slow: Maybe need reference slice from Rank1Tensor
-    fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
+    fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
+    {
         assert!(self.m_ready == true,
             "You cannot call backprop on a neural network that has not been validated first.");
 
@@ -265,13 +297,21 @@ impl Differentiable for NeuralNetwork {
         let mut current_error = Rank1Tensor::new(previous_error.size());
         current_error.copy(previous_error);
 
-        for i in self.m_layer_count-1..0 {
+        println!("Number of layers: {:?}", self.m_layer_count);
+
+        for i in (0..self.m_layer_count).rev() {
+            println!("Debug backprop. layer loop i = {:?}", i);
             let mut error_start_position = 0; let mut next_error_start_position = 0;
             let mut total_layer_inputs = 0;
-            for k in 0..self.m_blocks[i as usize].len() { total_layer_inputs += self.m_blocks[i as usize][k as usize].inputs(); }
+            // calculate total inputs to this layer:
+            for k in 0..self.m_blocks[i as usize].len() {
+                total_layer_inputs += self.m_blocks[i as usize][k as usize].inputs();
+            }
             let mut next_block_error = Rank1Tensor::new(total_layer_inputs);
             for j in 0..self.m_blocks[i as usize].len() {
-                let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].outputs());
+                let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
+                println!("Debug backprop. Block j = {:?}.",j);
+                println!("single_block_error: size={:?}", single_block_error.size());
                 single_block_error.copy_slice(&current_error, error_start_position, None);
                 let mut next_single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
 

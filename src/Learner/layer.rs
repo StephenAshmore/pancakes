@@ -15,7 +15,7 @@ pub struct Layer {
     m_outputs: u64,
     m_net_input: Rank1Tensor,
     m_net_output: Rank1Tensor,
-    m_blame: Rank1Tensor,
+    m_gradient: Rank1Tensor,
 }
 
 impl Layer {
@@ -29,7 +29,7 @@ impl Layer {
             m_outputs: neurons,
             m_net_input: Rank1Tensor::new(neurons),
             m_net_output: Rank1Tensor::new(neurons),
-            m_blame: Rank1Tensor::new(neurons),
+            m_gradient: Rank1Tensor::new(neurons),
         }
     }
 
@@ -96,10 +96,17 @@ impl Differentiable for Layer {
         assert!(weights[0].rows() == self.m_weights.rows(), "Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
         assert!(weights[0].cols() == self.m_weights.cols(),"Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
         self.m_weights.copy(&weights[0]);
-        self.m_weights.copy(&weights[1][0]);
+        self.m_bias.copy(&weights[1][0]);
     }
 
-    fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
+    fn first_gradient(&self) -> Rank1Tensor
+    {
+        println!("Debugging First_gradient: {:?}", self.m_gradient);
+        self.m_gradient.clone()
+    }
+
+    fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor)
+    {
         assert!(prediction.size() == self.m_outputs,
             "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");
         assert!(self.m_inputs != 0 && input.size() == self.m_inputs,
@@ -112,14 +119,19 @@ impl Differentiable for Layer {
         prediction.copy(&self.m_net_input);
     }
 
-    fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
-        self.m_blame.copy(&self.m_weights.multiplyRank1(&previous_error));
-        error.copy(&self.m_blame);
+
+// ehhhhh this should be different. see backprop step: http://uaf46365.ddns.uark.edu/ml/a4/instructions.html
+    fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
+    {
+        println!("weights cols: {:?}, error cols: {:?}", self.m_weights.cols(), previous_error.size());
+        self.m_gradient.copy(&self.m_weights.multiplyRank1(&previous_error));
+        println!("Debug backprop in layer: {:?}", self.m_gradient);
+        error.copy(&self.m_gradient);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)
     {
-        optimizer.optimize(&mut self.m_weights, &self.m_net_input, &self.m_blame);
+        optimizer.optimize(&mut self.m_weights, &self.m_gradient);
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

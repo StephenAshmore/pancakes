@@ -40,7 +40,7 @@ impl Rank1Tensor {
     }
 
     pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64, end_position: Option<u64>) {
-        assert!(other.size() + start_position < self.m_size,
+        assert!(other.size() + start_position <= self.m_size,
             "You cannot copy a slice of a Rank1Tensor into another Rank1Tensor if the destination is not big enough!");
 
         let target_size;

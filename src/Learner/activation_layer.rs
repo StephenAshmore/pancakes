@@ -14,7 +14,7 @@ pub struct Activation_Layer<T: IsFunction> {
     m_activation: T,
     m_net_input: Rank1Tensor,
     m_net_output: Rank1Tensor,
-    m_blame: Rank1Tensor,
+    m_gradient: Rank1Tensor,
 }
 
 impl<T: IsFunction> Activation_Layer<T> {
@@ -27,7 +27,7 @@ impl<T: IsFunction> Activation_Layer<T> {
             m_activation: activation,
             m_net_input: Rank1Tensor::new(neurons),
             m_net_output: Rank1Tensor::new(neurons),
-            m_blame: Rank1Tensor::new(neurons),
+            m_gradient: Rank1Tensor::new(neurons),
         }
     }
 }
@@ -54,6 +54,11 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         // Maybe in the future we will implement activation functions that require weights
     }
 
+    fn first_gradient(&self) -> Rank1Tensor
+    {
+        self.m_gradient.clone()
+    }
+
     fn forward(&mut self, input: &Rank1Tensor, prediction: &mut Rank1Tensor) {
         assert!(prediction.size() == self.m_outputs,
             "The prediction Rank1Tensor must be the same size as the number of neurons in this layer");
@@ -68,13 +73,13 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         // unsquash can be done all in one step??
         let mut unsquash = Rank1Tensor::new(self.m_outputs);
         // unsquash net input, and multiply by the previous_error:
-        self.m_activation.inverseRank1(&self.m_net_input, &mut unsquash);
+        self.m_activation.derivativeRank1(&self.m_net_input, &mut unsquash);
 
-        unsquash.multiply(previous_error, &mut self.m_blame);
+        unsquash.multiply(previous_error, &mut self.m_gradient);
 
         // this will insure the error for the next layer is properly set.
         // we no longer need to have access to the downstream layer's weights.
-        error.copy(&unsquash);
+        error.copy(&self.m_gradient);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)

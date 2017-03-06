@@ -17,4 +17,5 @@ pub trait Differentiable {
     fn set_weights(&mut self, weights: &Vec<Rank2Tensor>);
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>);
+    fn first_gradient(&self) -> Rank1Tensor;
 }
