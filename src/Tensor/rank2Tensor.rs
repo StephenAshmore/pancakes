@@ -1,8 +1,10 @@
 use Tensor::Vector;
 use Tensor::Rank1Tensor;
-use rand::Rng;
 use rand;
 use rand::distributions::{Range, IndependentSample};
+use std::io::prelude::*;
+use std::fs::File;
+use std::error::Error;
 
 use std::ops::{Index, IndexMut};
 
@@ -35,9 +37,38 @@ impl Rank2Tensor {
         }
     }
 
+    pub fn load(&mut self, dataset: String)
+    {
+        let mut file = match File::open(&dataset) {
+            // The `description` method of `io::Error` returns a string that
+            // describes the error
+            Err(why) => panic!("couldn't open {}: {}", dataset,
+                                                       why.description()),
+            Ok(file) => file,
+        };
+
+        // Read the file contents into a string, returns `io::Result<usize>`
+        let mut s = String::new();
+        match file.read_to_string(&mut s) {
+            Err(why) => panic!("couldn't read {}: {}", dataset,
+                                                       why.description()),
+            Ok(_) => (),
+        }
+
+        let mut iter = s.lines();
+        for line in iter {
+            let mut lower = &line.to_lowercase();
+            if !lower.starts_with("%") {
+                // if line.find("@data") {
+
+                // }
+            }
+        }
+
+    }
+
     pub fn resize_columns(&mut self, cols: u64)
     {
-        println!("Rows: {}", self.m_rows);
         self.m_cols = cols;
         for i in 0..self.m_rows
         {
@@ -66,7 +97,8 @@ impl Rank2Tensor {
         self.m_rows = rows;
     }
 
-    pub fn copy(&mut self, other: &Rank2Tensor) {
+    pub fn copy(&mut self, other: &Rank2Tensor)
+    {
         self.m_data.resize(other.m_rows, Rank1Tensor::new(other.cols()));
         self.m_rows = other.m_rows;
         self.m_cols = other.m_cols;
@@ -77,7 +109,8 @@ impl Rank2Tensor {
         }
     }
 
-    pub fn get(&self, row: u64, col: u64) -> &f64 {
+    pub fn get(&self, row: u64, col: u64) -> &f64
+    {
         &self.m_data[row][col]
     }
 
@@ -287,6 +320,10 @@ impl Rank2Tensor {
                 }
             }
         }
+        // test load:
+        let mut test_load = Rank2Tensor::new(0,0);
+        test_load.load(String::from("iris.arff"));
+
         returnValue
     }
 }

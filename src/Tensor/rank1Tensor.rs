@@ -47,9 +47,24 @@ impl Rank1Tensor {
         true
     }
 
+    pub fn fuzzy_equals(&mut self, other: &Rank1Tensor) -> bool
+    {
+        if self.size() != other.size() {
+            return false;
+        }
+
+        for i in 0..self.m_size {
+            let diff = self.m_data[i] - other.m_data[i];
+            if diff * diff > 0.0001 {
+                return false;
+            }
+        }
+
+        true
+    }
+
     pub fn slice_from(&mut self, other: &Rank1Tensor, start_position: u64)
     {
-        // println!("Debug slice_from: this.size={:?}, other.size={:?}, start_pos={:?}", self.size(), other.size(), start_position);
         assert!(other.size() <= self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
 
         for i in 0..other.size() {
@@ -67,8 +82,6 @@ impl Rank1Tensor {
         else {
             target_size = end_position.unwrap() - start_position;
         }
-
-        // println!("Debug copy_slice: this.size={:?}, opther.size={:?}, start_pos={:?}, target_size={:?}", self.size(), other.size(), start_position, target_size);
 
         assert!(target_size <= self.size(),
             "You cannot copy a slice of a Rank1Tensor into another Rank1Tensor if the destination is not big enough!");
