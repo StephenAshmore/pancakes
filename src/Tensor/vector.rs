@@ -23,6 +23,12 @@ impl<T: Clone> Vector<T> {
         }
     }
 
+    pub fn clear(&mut self)
+    {
+        self.m_data.clear();
+        self.m_size = 0;
+    }
+
     pub fn push(&mut self, value: T) {
         self.m_data.push(value);
         self.m_size += 1;

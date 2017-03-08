@@ -39,6 +39,8 @@ impl Rank2Tensor {
 
     pub fn load(&mut self, dataset: String)
     {
+        self.m_data.clear();
+        self.m_rows = 0; self.m_cols = 0;
         let mut file = match File::open(&dataset) {
             // The `description` method of `io::Error` returns a string that
             // describes the error
@@ -55,16 +57,68 @@ impl Rank2Tensor {
             Ok(_) => (),
         }
 
+        let mut column_counter = 0;
+        let mut row_counter = 0;
         let mut iter = s.lines();
+        let mut class_names: Vec<String> = Vec::new();
+
         for line in iter {
             let mut lower = &line.to_lowercase();
             if !lower.starts_with("%") {
-                // if line.find("@data") {
-
-                // }
+                if lower.find("@data") != None {
+                    // set up to start doing lines:
+                    self.m_cols = column_counter;
+                    println!("Columns: {}", self.m_cols);
+                }
+                else if lower.find("@attribute") != None {
+                    column_counter += 1;
+                    if lower.find("class") != None {
+                    let mut iter3 = lower.split_whitespace();
+                        let mut temp_count = 0;
+                        for j in iter3 {
+                            if temp_count == 2 {
+                                // loop through this bloody list
+                                let mut temp_s = j.clone().trim_matches('{');
+                                temp_s = temp_s.trim_matches('}');
+                                let mut iter4 = temp_s.split(',');
+                                for k in iter4 {
+                                    class_names.push(k.to_string());
+                                }
+                            }
+                            temp_count += 1;
+                        }
+                    }
+                }
+                else if lower.find("@") == None && !lower.is_empty() {
+                    // split up based on commas
+                    // create a new Rank1Tensor based just on this row
+                    // println!("Column Counter: {}", column_counter);
+                    let mut row = Rank1Tensor::new(column_counter);
+                    let mut iter2 = lower.split(",");
+                    let mut temp_counter = 0;
+                    for i in iter2 {
+                        let mut res = i.to_string().parse::<f64>();
+                        if res.is_ok() {
+                            row[temp_counter] = res.unwrap();
+                        }
+                        else {
+                            for j in 0..class_names.len() {
+                                if class_names[j] == i.to_string() {
+                                    row[temp_counter] = j as f64;
+                                }
+                            }
+                        }
+                        temp_counter += 1;
+                    }
+                    // push that rank1tensor back
+                    self.m_data.push(row);
+                    row_counter += 1;
+                }
             }
         }
 
+        self.m_rows = row_counter;
+        println!("Test arff read: {:?}", self.m_data);
     }
 
     pub fn resize_columns(&mut self, cols: u64)
