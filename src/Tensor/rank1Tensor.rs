@@ -1,5 +1,6 @@
 // use tensor::traits;
 // pub mod Rank1Tensor;
+use std::cmp;
 use std::ops::{Add, Mul, Index, IndexMut};
 use Tensor::Vector;
 
@@ -31,7 +32,9 @@ impl Rank1Tensor {
         }
     }
 
-    pub fn slice_from(&mut self, other: &Rank1Tensor, start_position: u64) {
+    pub fn slice_from(&mut self, other: &Rank1Tensor, start_position: u64)
+    {
+        println!("Debug slice_from: this.size={:?}, other.size={:?}, start_pos={:?}", self.size(), other.size(), start_position);
         assert!(other.size() <= self.m_size - start_position, "You cannot copy a Rank1Tensor into a slice of another Rank1Tensor if the slice is not big enough!");
 
         for i in 0..other.size() {
@@ -39,17 +42,21 @@ impl Rank1Tensor {
         }
     }
 
-    pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64, end_position: Option<u64>) {
-        assert!(other.size() + start_position <= self.m_size,
-            "You cannot copy a slice of a Rank1Tensor into another Rank1Tensor if the destination is not big enough!");
-
-        let target_size;
+    pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64, end_position: Option<u64>)
+    {
+        assert!(other.size() > start_position, "You can't start a position that is outside the bounds of the other tensor.");
+        let mut target_size = 0;
         if end_position.is_none() {
-            target_size = self.m_size;
+            target_size = cmp::min(self.m_size, other.size() - start_position);
         }
         else {
             target_size = end_position.unwrap() - start_position;
         }
+
+        println!("Debug copy_slice: this.size={:?}, opther.size={:?}, start_pos={:?}, target_size={:?}", self.size(), other.size(), start_position, target_size);
+
+        assert!(target_size <= self.size(),
+            "You cannot copy a slice of a Rank1Tensor into another Rank1Tensor if the destination is not big enough!");
 
         for i in 0..target_size {
             self.m_data[i] = other[i + start_position];

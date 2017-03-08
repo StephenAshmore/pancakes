@@ -114,7 +114,8 @@ impl Rank2Tensor {
     }
 
     pub fn multiplyRank1(&self, other: &Rank1Tensor) -> Rank1Tensor {
-        assert!(self.cols() == other.size(), "When multiplying Rank2Tensor x Rank1Tensor the Rank2Tensor's number of columns must be equal to the size of the Rank1Tensor.");
+        println!("Self.rows,Self.cols: {:?},{:?}. Other.size: {:?}", self.rows(), self.cols(), other.size());
+        assert!(self.rows() == other.size(), "When multiplying Rank2Tensor x Rank1Tensor the Rank2Tensor's number of columns must be equal to the size of the Rank1Tensor.");
 
         let mut resultTensor = Rank1Tensor::new(self.rows());
 

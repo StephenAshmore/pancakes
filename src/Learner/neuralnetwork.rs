@@ -314,9 +314,12 @@ impl Differentiable for NeuralNetwork {
                 println!("single_block_error: size={:?}", single_block_error.size());
                 single_block_error.copy_slice(&current_error, error_start_position, None);
                 let mut next_single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
-
+                println!("next_single_block_error.size: {:?}", next_single_block_error.size());
                 // give current error to this block and store its backpropagated error
                 self.m_blocks[i as usize][j as usize].backprop(&single_block_error, &mut next_single_block_error);
+
+                println!("after backprop, next_single_block_error.size: {:?}", next_single_block_error.size());
+
 
                 next_block_error.slice_from(&next_single_block_error, next_error_start_position);
                 next_error_start_position += next_single_block_error.size();

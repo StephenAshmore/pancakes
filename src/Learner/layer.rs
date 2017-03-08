@@ -124,12 +124,17 @@ impl Differentiable for Layer {
 // change?
 
 // ehhhhh this should be different. see backprop step: http://uaf46365.ddns.uark.edu/ml/a4/instructions.html
+// this step for fully connected layers should multiply the weights by the previous error.
+// it should multiply them in such a way that results in a rank1tensor, where each entry
+// is the gradient/blame for the next layer.
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
     {
-        println!("weights cols: {:?}, error cols: {:?}", self.m_weights.cols(), previous_error.size());
+
         self.m_gradient.copy(&self.m_weights.multiplyRank1(&previous_error));
-        println!("Debug backprop in layer: {:?}", self.m_gradient);
+        println!("weights rowsxcols: {:?}x{:?}, error cols: {:?}", self.m_weights.rows(), self.m_weights.cols(), previous_error.size());
+        // error.copy(&self.m_weights.multiplyRank1(&previous_error));
         error.copy(&self.m_gradient);
+        println!("Debug backprop in layer: {:?}", self.m_gradient);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)
