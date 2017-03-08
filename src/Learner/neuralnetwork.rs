@@ -78,7 +78,6 @@ impl NeuralNetwork {
         for i in 0..self.m_blocks.len() {
             current_outputs = 0;
             for j in 0..self.m_blocks[i].len() {
-                println!("Initializing block[{:?}][{:?}]. Outputs: {:?}. Inputs: {:?}", i, j, self.m_blocks[i as usize][j as usize].outputs(), current_inputs);
                 self.m_blocks[i as usize][j as usize].setInputs(current_inputs);
                 current_outputs += self.m_blocks[i as usize][j as usize].outputs();
             }
@@ -112,18 +111,12 @@ impl NeuralNetwork {
             // {
             let mut prediction = Rank1Tensor::new(self.m_outputs);
 
-            // println!("Begin nn.forward.");
             self.forward(&features[0], &mut prediction);
-
-            // println!("Prediction: {:?}", prediction);
-            // println!("The Target: {:?}", labels[0]);
 
             // calculate error of network:
             let mut error = self.m_cost_function.evaluateRank1(&labels[0], &prediction);
             let mut next_error = Rank1Tensor::new(self.inputs());
             self.backprop(&error, &mut next_error); // next_error unused
-
-            // println!("Error: {:?}", error);
 
             for i in 0..self.m_layer_count {
                 for j in 0..self.m_blocks[i as usize].len() {
@@ -204,18 +197,18 @@ impl NeuralNetwork {
 
         nn.forward(&features[0], &mut prediction);
         let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
-        println!("Final prediction: {:?}", prediction);
-        // println!("Final error vector:: {:?}", error);
+        // println!("Final prediction: {:?}", prediction);
+        let mut correct_pred = Rank1Tensor::new(2);
+        correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
+        if !prediction.fuzzy_equals(&correct_pred) {
+            println!("Failed: Forward did not result in the correct prediction.");
+        }
 
-        println!("BACKPROP STEP");
         let mut input_error = Rank1Tensor::new(nn.inputs());
         nn.backprop(&error, &mut input_error);
 
-
         let mut layer1_gradient = nn.m_blocks[0][0].first_gradient();
         let mut layer2_gradient = nn.m_blocks[2][0].first_gradient();
-        println!("Layer1 Gradient: {:?}", layer1_gradient);
-        println!("Layer2 Gradient: {:?}", layer2_gradient);
 
         // iterate through all blocks, call update on them.
         for i in 0..nn.layers() {
@@ -224,9 +217,11 @@ impl NeuralNetwork {
             }
         }
 
+        correct_pred[0] = 0.12318119206528; correct_pred[1] = -0.14502768344823;
         nn.forward(&features[0], &mut prediction);
-        println!("Updated prediction: {:?}", prediction);
-
+        if !prediction.fuzzy_equals(&correct_pred) {
+            println!("Failed: Forward did not result in the correct prediction.");
+        }
         true
     }
 }
@@ -306,12 +301,9 @@ impl Differentiable for NeuralNetwork {
         // give the correct input to the next layer:
         let mut current_error = Rank1Tensor::new(previous_error.size());
         current_error.copy(previous_error);
-        println!("Previous error is: {:?}", current_error);
 
-        println!("Number of layers: {:?}", self.m_layer_count);
 
         for i in (0..self.m_layer_count).rev() {
-            println!("Debug backprop. layer loop i = {:?}", i);
             let mut error_start_position = 0; let mut next_error_start_position = 0;
             let mut total_layer_inputs = 0;
             // calculate total inputs to this layer:
@@ -322,16 +314,11 @@ impl Differentiable for NeuralNetwork {
             let mut next_block_error = Rank1Tensor::new(total_layer_inputs);
             for j in 0..self.m_blocks[i as usize].len() {
                 let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].outputs());
-                // println!("Debug backprop. Block j = {:?}.",j);
-                // println!("single_block_error: size={:?}", single_block_error.size());
                 single_block_error.copy_slice(&current_error, error_start_position, None);
-                println!("Error for this block is: {:?}", single_block_error);
                 let mut next_single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
-                // println!("next_single_block_error.size: {:?}", next_single_block_error.size());
+
                 // give current error to this block and store its backpropagated error
                 self.m_blocks[i as usize][j as usize].backprop(&single_block_error, &mut next_single_block_error);
-
-                // println!("after backprop, next_single_block_error.size: {:?}", next_single_block_error.size());
 
                 next_block_error.slice_from(&next_single_block_error, next_error_start_position);
                 next_error_start_position += next_single_block_error.size();

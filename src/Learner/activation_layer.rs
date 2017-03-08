@@ -70,7 +70,6 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
-        println!("Activation layer prev_error: {:?}", previous_error);
         // unsquash can be done all in one step??
         let mut unsquash = Rank1Tensor::new(self.m_outputs);
         // unsquash net input, and multiply by the previous_error:
@@ -81,7 +80,6 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         // this will insure the error for the next layer is properly set.
         // we no longer need to have access to the downstream layer's weights.
         error.copy(&self.m_gradient);
-        println!("Activation layer error: {:?}", error);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)

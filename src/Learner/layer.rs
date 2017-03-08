@@ -98,7 +98,6 @@ impl Differentiable for Layer {
 
     fn first_gradient(&self) -> Rank1Tensor
     {
-        println!("Debugging First_gradient: {:?}", self.m_gradient);
         self.m_gradient.clone()
     }
 
@@ -109,7 +108,6 @@ impl Differentiable for Layer {
         assert!(self.m_inputs != 0 && input.size() == self.m_inputs,
             "The input Rank1Tensor must be the same size as the number of inputs in this layer!");
 
-        // println!("Weights rows: {} cols: {}. Input size: {}", self.m_weights.rows(), self.m_weights.cols(), input.size());
         self.m_input.copy(input);
         self.m_net_input = self.m_weights.multiply_rank1(input);
         self.m_net_input = self.m_net_input.add(&self.m_bias);
@@ -127,12 +125,9 @@ impl Differentiable for Layer {
 // is the gradient/blame for the next layer.
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
     {
-        println!("Backprop layer outputs: {:?}, inputs: {:?}", self.outputs(), self.inputs());
         self.m_gradient.copy(previous_error);
-        // self.m_gradient.copy(&self.m_weights.multiply_rank1_transpose(&previous_error));
-        // error.copy(&self.m_weights.multiplyRank1(&previous_error));
+
         error.copy(&self.m_weights.multiply_rank1_transpose(&previous_error));
-        println!("Layer Backprop Gradient: size:{:?} values: {:?}", self.m_gradient.size(), self.m_gradient);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)
