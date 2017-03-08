@@ -21,7 +21,7 @@ impl GradientDescent {
 impl Optimizer for GradientDescent {
     // what should input be?
     // GRADIENT IS BLAME
-    fn optimize(&mut self, weights: &mut Rank2Tensor, gradient: &Rank1Tensor) {
+    fn optimize(&mut self, weights: &mut Rank2Tensor, bias: &mut Rank1Tensor, input: &mut Rank1Tensor, gradient: &Rank1Tensor) {
         // input size should be equal to the number of columns in weights.
         // assert!(weights.cols() == input.size(), "The number of inputs must equal the columns of the weights for gradient descent to make sense.");
 
@@ -29,8 +29,9 @@ impl Optimizer for GradientDescent {
             for j in 0..weights.cols() {
                 // what should I do here?
                 // weights[i][j] -= self.m_learning_rate * blame[i];
-                weights[i][j] -= self.m_learning_rate * gradient[i];
+                weights[i][j] += self.m_learning_rate * gradient[i] * input[j];
             }
+            bias[i] += self.m_learning_rate * gradient[i];
         }
     }
 }

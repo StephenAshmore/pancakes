@@ -13,6 +13,7 @@ pub struct Layer {
     m_bias: Rank1Tensor,
     m_inputs: u64,
     m_outputs: u64,
+    m_input: Rank1Tensor,
     m_net_input: Rank1Tensor,
     m_net_output: Rank1Tensor,
     m_gradient: Rank1Tensor,
@@ -27,6 +28,7 @@ impl Layer {
             m_bias: Rank1Tensor::new(neurons),
             m_inputs: 1,
             m_outputs: neurons,
+            m_input: Rank1Tensor::new(1),
             m_net_input: Rank1Tensor::new(neurons),
             m_net_output: Rank1Tensor::new(neurons),
             m_gradient: Rank1Tensor::new(neurons),
@@ -57,8 +59,8 @@ impl Differentiable for Layer {
     fn setInputs(&mut self, new_inputs: u64)
     {
         self.m_inputs = new_inputs;
-        println!("Resizing weights to have cols: {}", self.m_inputs);
-        self.m_weights.resizeColumns(self.m_inputs);
+        self.m_weights.resize_columns(self.m_inputs);
+        self.m_input.resize(self.m_inputs);
 
         // Initialization:
         // This process should be the same for most activation functions. For ReLu,
@@ -82,12 +84,7 @@ impl Differentiable for Layer {
         }
 
         // biases are initialized with zeroes, lets do this explicitely here:
-        // self.m_bias.fill(0.0);
-
-
-
-        // println!("Magnitude: {:?}", mag);
-        // println!("Weight Matrix: {:?}", self.m_weights);
+        self.m_bias.fill(0.0);
     }
 
     fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
@@ -113,7 +110,8 @@ impl Differentiable for Layer {
             "The input Rank1Tensor must be the same size as the number of inputs in this layer!");
 
         // println!("Weights rows: {} cols: {}. Input size: {}", self.m_weights.rows(), self.m_weights.cols(), input.size());
-        self.m_net_input = self.m_weights.multiplyRank1(input);
+        self.m_input.copy(input);
+        self.m_net_input = self.m_weights.multiply_rank1(input);
         self.m_net_input = self.m_net_input.add(&self.m_bias);
 
         prediction.copy(&self.m_net_input);
@@ -129,17 +127,17 @@ impl Differentiable for Layer {
 // is the gradient/blame for the next layer.
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
     {
-
-        self.m_gradient.copy(&self.m_weights.multiplyRank1(&previous_error));
-        println!("weights rowsxcols: {:?}x{:?}, error cols: {:?}", self.m_weights.rows(), self.m_weights.cols(), previous_error.size());
+        println!("Backprop layer outputs: {:?}, inputs: {:?}", self.outputs(), self.inputs());
+        self.m_gradient.copy(previous_error);
+        // self.m_gradient.copy(&self.m_weights.multiply_rank1_transpose(&previous_error));
         // error.copy(&self.m_weights.multiplyRank1(&previous_error));
-        error.copy(&self.m_gradient);
-        println!("Debug backprop in layer: {:?}", self.m_gradient);
+        error.copy(&self.m_weights.multiply_rank1_transpose(&previous_error));
+        println!("Layer Backprop Gradient: size:{:?} values: {:?}", self.m_gradient.size(), self.m_gradient);
     }
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>)
     {
-        optimizer.optimize(&mut self.m_weights, &self.m_gradient);
+        optimizer.optimize(&mut self.m_weights, &mut self.m_bias, &mut self.m_input, &self.m_gradient);
     }
 
     fn forwardBatch(&mut self, features: Rank2Tensor) {

@@ -78,6 +78,7 @@ impl NeuralNetwork {
         for i in 0..self.m_blocks.len() {
             current_outputs = 0;
             for j in 0..self.m_blocks[i].len() {
+                println!("Initializing block[{:?}][{:?}]. Outputs: {:?}. Inputs: {:?}", i, j, self.m_blocks[i as usize][j as usize].outputs(), current_inputs);
                 self.m_blocks[i as usize][j as usize].setInputs(current_inputs);
                 current_outputs += self.m_blocks[i as usize][j as usize].outputs();
             }
@@ -155,7 +156,7 @@ impl NeuralNetwork {
 
 // Todo:
     pub fn test() -> bool {
-        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.0001))) as Box<Optimizer>, Box::new(SSE::new()) as Box<IsCostFunction>);
+        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
 
         // Not the most pleasant syntax for moving a trait object.
         nn.add(Box::new(Layer::new(3)) as Box<Differentiable>);
@@ -204,18 +205,27 @@ impl NeuralNetwork {
         nn.forward(&features[0], &mut prediction);
         let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
         println!("Final prediction: {:?}", prediction);
-        println!("Final error vector:: {:?}", error);
+        // println!("Final error vector:: {:?}", error);
 
         println!("BACKPROP STEP");
         let mut input_error = Rank1Tensor::new(nn.inputs());
         nn.backprop(&error, &mut input_error);
+
 
         let mut layer1_gradient = nn.m_blocks[0][0].first_gradient();
         let mut layer2_gradient = nn.m_blocks[2][0].first_gradient();
         println!("Layer1 Gradient: {:?}", layer1_gradient);
         println!("Layer2 Gradient: {:?}", layer2_gradient);
 
-        // nn.train(&features, &labels);
+        // iterate through all blocks, call update on them.
+        for i in 0..nn.layers() {
+            for j in 0..nn.m_blocks[i as usize].len() {
+                nn.m_blocks[i as usize][j as usize].update(&mut nn.m_optimizer);
+            }
+        }
+
+        nn.forward(&features[0], &mut prediction);
+        println!("Updated prediction: {:?}", prediction);
 
         true
     }
@@ -296,6 +306,7 @@ impl Differentiable for NeuralNetwork {
         // give the correct input to the next layer:
         let mut current_error = Rank1Tensor::new(previous_error.size());
         current_error.copy(previous_error);
+        println!("Previous error is: {:?}", current_error);
 
         println!("Number of layers: {:?}", self.m_layer_count);
 
@@ -307,19 +318,20 @@ impl Differentiable for NeuralNetwork {
             for k in 0..self.m_blocks[i as usize].len() {
                 total_layer_inputs += self.m_blocks[i as usize][k as usize].inputs();
             }
+
             let mut next_block_error = Rank1Tensor::new(total_layer_inputs);
             for j in 0..self.m_blocks[i as usize].len() {
-                let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
-                println!("Debug backprop. Block j = {:?}.",j);
-                println!("single_block_error: size={:?}", single_block_error.size());
+                let mut single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].outputs());
+                // println!("Debug backprop. Block j = {:?}.",j);
+                // println!("single_block_error: size={:?}", single_block_error.size());
                 single_block_error.copy_slice(&current_error, error_start_position, None);
+                println!("Error for this block is: {:?}", single_block_error);
                 let mut next_single_block_error = Rank1Tensor::new(self.m_blocks[i as usize][j as usize].inputs());
-                println!("next_single_block_error.size: {:?}", next_single_block_error.size());
+                // println!("next_single_block_error.size: {:?}", next_single_block_error.size());
                 // give current error to this block and store its backpropagated error
                 self.m_blocks[i as usize][j as usize].backprop(&single_block_error, &mut next_single_block_error);
 
-                println!("after backprop, next_single_block_error.size: {:?}", next_single_block_error.size());
-
+                // println!("after backprop, next_single_block_error.size: {:?}", next_single_block_error.size());
 
                 next_block_error.slice_from(&next_single_block_error, next_error_start_position);
                 next_error_start_position += next_single_block_error.size();

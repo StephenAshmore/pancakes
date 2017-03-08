@@ -35,7 +35,7 @@ impl Rank2Tensor {
         }
     }
 
-    pub fn resizeColumns(&mut self, cols: u64)
+    pub fn resize_columns(&mut self, cols: u64)
     {
         println!("Rows: {}", self.m_rows);
         self.m_cols = cols;
@@ -113,9 +113,9 @@ impl Rank2Tensor {
         }
     }
 
-    pub fn multiplyRank1(&self, other: &Rank1Tensor) -> Rank1Tensor {
-        println!("Self.rows,Self.cols: {:?},{:?}. Other.size: {:?}", self.rows(), self.cols(), other.size());
-        assert!(self.rows() == other.size(), "When multiplying Rank2Tensor x Rank1Tensor the Rank2Tensor's number of columns must be equal to the size of the Rank1Tensor.");
+    pub fn multiply_rank1(&self, other: &Rank1Tensor) -> Rank1Tensor
+    {
+        assert!(self.cols() == other.size(), "To multiply by a rank1tensor, the number of columns and the size of the tensor must be the same.");
 
         let mut resultTensor = Rank1Tensor::new(self.rows());
 
@@ -126,6 +126,20 @@ impl Rank2Tensor {
         }
 
         resultTensor
+    }
+
+    pub fn multiply_rank1_transpose(&self, other: &Rank1Tensor) -> Rank1Tensor
+    {
+        assert!(self.rows() == other.size(), "To invert and multiply by a rank1tensor, the number of columns and the size of the tensor must be the same.");
+        let mut result_tensor = Rank1Tensor::new(self.cols());
+
+        for j in 0..self.cols() {
+            for i in 0..self.rows() {
+                result_tensor[j] = result_tensor[j] + (self[i][j] * other[i]);
+            }
+        }
+
+        result_tensor
     }
 
     pub fn multiply(&self, other: &Rank2Tensor) -> Rank2Tensor {
