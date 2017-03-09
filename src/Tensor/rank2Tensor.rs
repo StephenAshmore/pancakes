@@ -118,7 +118,42 @@ impl Rank2Tensor {
         }
 
         self.m_rows = row_counter;
-        println!("Test arff read: {:?}", self.m_data);
+        //println!("Test arff read: {:?}", self.m_data);
+    }
+
+    pub fn copy_columns(&self, start_column: u64, end_column: u64) -> Rank2Tensor
+    {
+        assert!(end_column < self.cols() && start_column < self.cols(), "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
+
+        let mut result_tensor = Rank2Tensor::new(self.rows(), end_column - start_column);
+        for i in 0..self.m_rows {
+            let mut col_cnt = 0;
+            for j in start_column..end_column {
+                result_tensor[i][col_cnt] = self.m_data[i][j];
+                col_cnt += 1;
+            }
+        }
+
+        result_tensor
+    }
+
+    pub fn copy_portion(&self, start_row: u64, start_column: u64, end_row: u64, end_column: u64) -> Rank2Tensor
+    {
+        assert!(end_column < self.cols() && start_column < self.cols() && start_column < end_column, "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
+        assert!(end_row < self.rows() && start_row < self.rows() && start_row < end_row, "You can't copy rows that are smaller than the number of rows in a Rank2Tensor!");
+
+        let mut result_tensor = Rank2Tensor::new(end_row - start_row, end_column - start_column);
+        let mut row_cnt = 0;
+        for i in 0..self.m_rows {
+            let mut col_cnt = 0;
+            for j in start_column..end_column {
+                result_tensor[row_cnt][col_cnt] = self.m_data[i][j];
+                col_cnt += 1;
+            }
+            row_cnt += 1;
+        }
+
+        result_tensor
     }
 
     pub fn resize_columns(&mut self, cols: u64)
