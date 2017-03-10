@@ -37,7 +37,7 @@ impl Rank2Tensor {
         }
     }
 
-    pub fn load(&mut self, dataset: String)
+    pub fn load_arff(&mut self, dataset: String)
     {
         self.m_data.clear();
         self.m_rows = 0; self.m_cols = 0;
@@ -121,6 +121,25 @@ impl Rank2Tensor {
         //println!("Test arff read: {:?}", self.m_data);
     }
 
+    pub fn shuffle(&mut self)
+    {
+        let mut rng = rand::thread_rng();
+        let range = Range::new(0, self.rows());
+        let mut temp_tensor = Rank1Tensor::new(self.cols());
+        for i in 0..self.m_rows {
+            let row1 = range.ind_sample(&mut rng);
+            let row2 = range.ind_sample(&mut rng);
+            // swap row1 and row 2
+            for j in 0..self.m_cols {
+                temp_tensor[j] = self.m_data[row1][j];
+            }
+            for j in 0..self.m_cols {
+                self.m_data[row1][j] = self.m_data[row2][j];
+                self.m_data[row2][j] = temp_tensor[j];
+            }
+        }
+    }
+
     pub fn copy_columns(&self, start_column: u64, end_column: u64) -> Rank2Tensor
     {
         assert!(end_column < self.cols() && start_column < self.cols(), "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
@@ -137,17 +156,18 @@ impl Rank2Tensor {
         result_tensor
     }
 
-    pub fn copy_portion(&self, start_row: u64, start_column: u64, end_row: u64, end_column: u64) -> Rank2Tensor
+    pub fn copy_portion(&self, start_row: u64, start_column: u64, count_rows: u64, count_columns: u64) -> Rank2Tensor
     {
-        assert!(end_column < self.cols() && start_column < self.cols() && start_column < end_column, "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
-        assert!(end_row < self.rows() && start_row < self.rows() && start_row < end_row, "You can't copy rows that are smaller than the number of rows in a Rank2Tensor!");
+        assert!(count_columns <= self.cols() && start_column < self.cols(), "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
+        assert!(count_rows < self.rows() && start_row < self.rows(), "You can't copy rows that are smaller than the number of rows in a Rank2Tensor!");
 
-        let mut result_tensor = Rank2Tensor::new(end_row - start_row, end_column - start_column);
+        let mut result_tensor = Rank2Tensor::new(count_rows, count_columns);
+
         let mut row_cnt = 0;
-        for i in 0..self.m_rows {
+        for i in 0..count_rows {
             let mut col_cnt = 0;
-            for j in start_column..end_column {
-                result_tensor[row_cnt][col_cnt] = self.m_data[i][j];
+            for j in 0..count_columns {
+                result_tensor[row_cnt][col_cnt] = self.m_data[i + start_row][j + start_column];
                 col_cnt += 1;
             }
             row_cnt += 1;
@@ -299,7 +319,7 @@ impl Rank2Tensor {
         resultTensor
     }
 
-    pub fn subSquare(&self, other: &Rank2Tensor) -> Rank2Tensor {
+    pub fn sub_square(&self, other: &Rank2Tensor) -> Rank2Tensor {
         assert!(self.compatible(other, Compatibilty::Sub),
                 "Cannot add two 2D Tensors that aren't compatible!");
 
@@ -347,7 +367,7 @@ impl Rank2Tensor {
         (self.m_rows, self.m_cols)
     }
 
-    pub fn countElements(&self) -> u64 {
+    pub fn count_elements(&self) -> u64 {
         self.m_rows * self.m_cols
     }
 
@@ -383,7 +403,8 @@ impl Rank2Tensor {
         println!("");
     }
     /// Test Function for Rank2Tensor:
-    pub fn test() -> bool {
+    pub fn test() -> bool
+    {
         let mut returnValue = true;
         let mut test_tensor = Rank2Tensor::new(5, 5);
 
@@ -411,7 +432,7 @@ impl Rank2Tensor {
         }
         // test load:
         let mut test_load = Rank2Tensor::new(0,0);
-        test_load.load(String::from("iris.arff"));
+        test_load.load_arff(String::from("iris.arff"));
 
         returnValue
     }

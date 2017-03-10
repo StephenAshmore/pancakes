@@ -17,7 +17,7 @@ impl IsCostFunction for SSE {
     }
 
     fn evaluateRank1(&self, target: &Rank1Tensor, prediction: &Rank1Tensor) -> Rank1Tensor {
-        target.subSquare(prediction)
+        target.sub_square(prediction)
     }
 
     // evaluateRank2 does not really make sense in the scope of a neural network.
@@ -25,7 +25,7 @@ impl IsCostFunction for SSE {
     // This evaluateRank2 will be used for batch training, so maybe it should be named
     // more appropriately?
     fn evaluateRank2(&self, target: &Rank2Tensor, prediction: &Rank2Tensor) -> Rank2Tensor {
-        target.subSquare(prediction)
+        target.sub_square(prediction)
     }
 }
 pub struct difference{}

@@ -103,33 +103,29 @@ impl NeuralNetwork {
         assert!(self.m_outputs == labels.cols(), "Labels must have the same number of columns as the number of outputs to the neural network.");
 
         // iterate until fully trained
+        // TODO: implement code to stop once convergence ends.
         // while !self.converged() {
-        for i in 0..10000 {
-            // randomly iterate through training set
+        for i in 0..1000
+        {
+            // println!("Epoch: {}", i);
+            // TODO: randomly iterate through training set
+            for row in 0..features.rows()
+            {
+                let mut prediction = Rank1Tensor::new(self.m_outputs);
 
-            // for row in 0..features.size()
-            // {
-            let mut prediction = Rank1Tensor::new(self.m_outputs);
+                self.forward(&features[row], &mut prediction);
 
-            self.forward(&features[0], &mut prediction);
+                // calculate error of network:
+                let mut error = self.m_cost_function.evaluateRank1(&labels[row], &prediction);
+                let mut next_error = Rank1Tensor::new(self.inputs());
+                self.backprop(&error, &mut next_error); // next_error unused
 
-            // calculate error of network:
-            let mut error = self.m_cost_function.evaluateRank1(&labels[0], &prediction);
-            let mut next_error = Rank1Tensor::new(self.inputs());
-            self.backprop(&error, &mut next_error); // next_error unused
-
-            for i in 0..self.m_layer_count {
-                for j in 0..self.m_blocks[i as usize].len() {
-                    self.m_blocks[i as usize][j as usize].update(&mut self.m_optimizer);
+                for i in 0..self.m_layer_count {
+                    for j in 0..self.m_blocks[i as usize].len() {
+                        self.m_blocks[i as usize][j as usize].update(&mut self.m_optimizer);
+                    }
                 }
             }
-            // optimize the weights:
-            // nn.optimize();
-            // how do we call the appropriate "update weights" step?
-            // how will the neural net train call this for all of its constituent parts?
-            // should we have an update weights or optimize method for Differentiable?
-
-            // }
         }
     }
 
@@ -147,7 +143,6 @@ impl NeuralNetwork {
         self.m_layer_output_counts[layer_number]
     }
 
-// Todo:
     pub fn test() -> bool {
         let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
 
@@ -222,6 +217,44 @@ impl NeuralNetwork {
         if !prediction.fuzzy_equals(&correct_pred) {
             println!("Failed: Forward did not result in the correct prediction.");
         }
+
+        // test loading iris:
+        let mut iris = Rank2Tensor::new(0,0);
+        iris.load_arff("iris.arff".to_string());
+        iris.shuffle();
+
+        // TODO: Copy portion failing?
+        let mut train_features = iris.copy_portion(0, 0, iris.rows() * 2 / 3, 4);
+        let mut train_labels = iris.copy_portion(0, 4, iris.rows() * 2 / 3, 1);
+        let mut test_features = iris.copy_portion(iris.rows() * 2 /3, 0, iris.rows() * 1 / 3, 4);
+        let mut test_labels = iris.copy_portion(iris.rows() * 2 /3, 4, iris.rows() * 1 / 3, 1);
+        println!("Train features rows,cols: {},{}", train_features.rows(), train_features.cols());
+        println!("Train labels rows,cols: {},{}", train_labels.rows(), train_labels.cols());
+        println!("Test features rows,cols: {},{}", test_features.rows(), test_features.cols());
+        println!("Test labels rows,cols: {},{}", test_labels.rows(), test_labels.cols());
+
+        // Test on iris dataset:
+        let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
+        nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(1)) as Box<Differentiable>);
+
+        nn2.train(&train_features, &train_labels);
+
+        // validate on test set
+        let mut test_prediction = Rank1Tensor::new(test_labels.cols());
+        let sse_func = SSE::new();
+        let mut error = 0.0;
+        for i in 0..test_features.rows() {
+            nn2.forward(&test_features[i], &mut test_prediction);
+            let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
+            error += temp_error[0];
+            // println!("Prediction: {} versus target: {}", test_prediction[0], test_labels[i][0]);
+        }
+        println!("SSE: {}", error);
+
         true
     }
 }
