@@ -105,7 +105,7 @@ impl NeuralNetwork {
         // iterate until fully trained
         // TODO: implement code to stop once convergence ends.
         // while !self.converged() {
-        for i in 0..1000
+        for i in 0..5000
         {
             // println!("Epoch: {}", i);
             // TODO: randomly iterate through training set
@@ -235,25 +235,29 @@ impl NeuralNetwork {
 
         // Test on iris dataset:
         let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
-        nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
-        nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
-        nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
-        nn2.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(16)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(16, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(8)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(8, TanH::new())) as Box<Differentiable>);
         nn2.add(Box::new(Layer::new(1)) as Box<Differentiable>);
 
         nn2.train(&train_features, &train_labels);
 
         // validate on test set
         let mut test_prediction = Rank1Tensor::new(test_labels.cols());
+        println!("Test set size: {}", test_features.rows());
         let sse_func = SSE::new();
-        let mut error = 0.0;
+        let mut mis = 0;
         for i in 0..test_features.rows() {
             nn2.forward(&test_features[i], &mut test_prediction);
-            let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
-            error += temp_error[0];
+            test_prediction[0] = test_prediction[0].round();
+            if test_prediction[0] != test_labels[i][0] {
+                mis += 1;
+            }
+            // error += temp_error[0];
             // println!("Prediction: {} versus target: {}", test_prediction[0], test_labels[i][0]);
         }
-        println!("SSE: {}", error);
+        println!("Misclassifications: {}", mis);
 
         true
     }
