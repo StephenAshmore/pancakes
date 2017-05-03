@@ -68,7 +68,7 @@ impl Rank2Tensor {
                 if lower.find("@data") != None {
                     // set up to start doing lines:
                     self.m_cols = column_counter;
-                    println!("Columns: {}", self.m_cols);
+                    // println!("Columns: {}", self.m_cols);
                 }
                 else if lower.find("@attribute") != None {
                     column_counter += 1;
@@ -123,6 +123,7 @@ impl Rank2Tensor {
 
     pub fn shuffle(&mut self)
     {
+        // TODO: Shuffle with fisher-yates/durstenfeld algorithm:
         let mut rng = rand::thread_rng();
         let range = Range::new(0, self.rows());
         let mut temp_tensor = Rank1Tensor::new(self.cols());

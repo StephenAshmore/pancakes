@@ -8,6 +8,10 @@ use Learner::activation_layer::*;
 use Optimizer::*;
 use Function::functiontraits::*;
 use Function::costfunctions::*;
+use Tensor::Iterator;
+
+use rand;
+use rand::distributions::{Range, IndependentSample};
 
 // #[derive(Clone)]
 pub struct NeuralNetwork {
@@ -105,18 +109,21 @@ impl NeuralNetwork {
         // iterate until fully trained
         // TODO: implement code to stop once convergence ends.
         // while !self.converged() {
-        for i in 0..1000
+        let mut iterator = Iterator::new(features.rows());
+        let mut row = 0;
+        for i in 0..2000
         {
-            // println!("Epoch: {}", i);
-            // TODO: randomly iterate through training set
-            for row in 0..features.rows()
+            iterator.reset();
+            while iterator.has_next()
             {
+                row = iterator.next();
                 let mut prediction = Rank1Tensor::new(self.m_outputs);
 
                 self.forward(&features[row], &mut prediction);
 
                 // calculate error of network:
                 let mut error = self.m_cost_function.evaluateRank1(&labels[row], &prediction);
+
                 let mut next_error = Rank1Tensor::new(self.inputs());
                 self.backprop(&error, &mut next_error); // next_error unused
 
@@ -197,6 +204,7 @@ impl NeuralNetwork {
         correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
         if !prediction.fuzzy_equals(&correct_pred) {
             println!("Failed: Forward did not result in the correct prediction.");
+            return false
         }
 
         let mut input_error = Rank1Tensor::new(nn.inputs());
@@ -228,13 +236,13 @@ impl NeuralNetwork {
         let mut train_labels = iris.copy_portion(0, 4, iris.rows() * 2 / 3, 1);
         let mut test_features = iris.copy_portion(iris.rows() * 2 /3, 0, iris.rows() * 1 / 3, 4);
         let mut test_labels = iris.copy_portion(iris.rows() * 2 /3, 4, iris.rows() * 1 / 3, 1);
-        println!("Train features rows,cols: {},{}", train_features.rows(), train_features.cols());
-        println!("Train labels rows,cols: {},{}", train_labels.rows(), train_labels.cols());
-        println!("Test features rows,cols: {},{}", test_features.rows(), test_features.cols());
-        println!("Test labels rows,cols: {},{}", test_labels.rows(), test_labels.cols());
+        // println!("Train features rows,cols: {},{}", train_features.rows(), train_features.cols());
+        // println!("Train labels rows,cols: {},{}", train_labels.rows(), train_labels.cols());
+        // println!("Test features rows,cols: {},{}", test_features.rows(), test_features.cols());
+        // println!("Test labels rows,cols: {},{}", test_labels.rows(), test_labels.cols());
 
         // Test on iris dataset:
-        let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
+        let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.05))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
         nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
         nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
         nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
@@ -247,14 +255,25 @@ impl NeuralNetwork {
         let mut test_prediction = Rank1Tensor::new(test_labels.cols());
         let sse_func = SSE::new();
         let mut error = 0.0;
+        let mut correct = 0; let mut total = test_features.rows();
+        let mut rng = rand::thread_rng();
+        let range = Range::new(0, test_features.rows());
+        let mut rand_index = 0;
         for i in 0..test_features.rows() {
+            rand_index = range.ind_sample(&mut rng);
             nn2.forward(&test_features[i], &mut test_prediction);
             let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
             error += temp_error[0];
-            // println!("Prediction: {} versus target: {}", test_prediction[0], test_labels[i][0]);
+            if test_prediction[0].round() == test_labels[i][0] {
+                correct += 1;
+            }
+            println!("Prediction: {} versus target: {}", test_prediction[0].round(), test_labels[i][0]);
         }
+        println!("Accuracy: {}, correct: {}, total: {}", correct / total, correct, total);
         println!("SSE: {}", error);
-
+        if correct < 40 {
+            return false
+        }
         true
     }
 }

@@ -48,8 +48,8 @@ impl<T: Clone> Vector<T> {
     pub fn resize(&mut self, size: u64, value: T) {
         assert!(size > 0, "You can't make a negative sized Vector!");
 
-        // self.m_data.resize(size);
         self.m_data.resize(size as usize, value);
+        self.m_size = size;
     }
 
     /// Build a filled Vector
