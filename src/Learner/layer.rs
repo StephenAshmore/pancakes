@@ -62,24 +62,13 @@ impl Differentiable for Layer {
         self.m_weights.resize_columns(self.m_inputs);
         self.m_input.resize(self.m_inputs);
 
-        // Initialization:
-        // This process should be the same for most activation functions. For ReLu,
-        // they will need to be their own Differentiable type because the weights
-        // will need to be initialized differently for best results.
-        // initialize weights:
+        // initialize weights with small random values for a default layer:
         let mut rng = rand::thread_rng();
         let range = Range::new(0.0, new_inputs as f64);
-        // silly way to initialize the weights because I can't figure out how to get max to work.
-        let mag1 = 3.0;
-        let mag2 = 1.0 / (new_inputs as f64);
-        let mut mag = mag2;
-        if mag1 > mag2 {
-            mag = mag1;
-        }
 
         for i in 0..self.m_weights.rows() {
             for j in 0..self.m_weights.cols() {
-                self.m_weights[i][j] = range.ind_sample(&mut rng) / (new_inputs as f64).sqrt();
+                self.m_weights[i][j] = 0.01 * range.ind_sample(&mut rng);
             }
         }
 
