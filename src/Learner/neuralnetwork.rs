@@ -13,7 +13,6 @@ use Tensor::Iterator;
 use rand;
 use rand::distributions::{Range, IndependentSample};
 
-// #[derive(Clone)]
 pub struct NeuralNetwork {
     m_blocks: Vec<Vec<Box<Differentiable>>>,
     m_layer_count: u64,
@@ -149,8 +148,6 @@ impl NeuralNetwork {
 
         self.m_layer_output_counts[layer_number]
     }
-
-
 }
 
 impl Differentiable for NeuralNetwork {
