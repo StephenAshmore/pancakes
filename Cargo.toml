@@ -1,8 +1,9 @@
 [package]
-
   name = "pancakes"
-  version = "0.0.1"
+  version = "0.1.0"
   authors = [ "Stephen Ashmore <stephen@ashmore.io>" ]
+  description = "Pancakes is a modular neural network library, allowing for a variety of network topologies."
+  readme = "README.md"
 
 
 [dependencies]
