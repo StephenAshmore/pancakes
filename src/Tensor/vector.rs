@@ -87,9 +87,3 @@ impl<T: Clone> IndexMut<u64> for Vector<T> {
 //         returnVecf
 //     }
 // }
-
-
-pub fn test() -> bool {
-    // test here.
-    true
-}

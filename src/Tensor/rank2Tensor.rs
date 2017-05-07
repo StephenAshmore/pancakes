@@ -403,40 +403,6 @@ impl Rank2Tensor {
         }
         println!("");
     }
-    /// Test Function for Rank2Tensor:
-    pub fn test() -> bool
-    {
-        let mut returnValue = true;
-        let mut test_tensor = Rank2Tensor::new(5, 5);
-
-        test_tensor.identity();
-        for i in 0..test_tensor.rows() {
-            for j in 0..test_tensor.cols() {
-                if i == j && test_tensor[i][j] != 1.0 {
-                    returnValue = false;
-                }
-            }
-        }
-
-        let mut test_tensor2 = Rank2Tensor::new(5, 5);
-        test_tensor2.identity();
-        test_tensor2.scale(2.0);
-        test_tensor.scale(2.0);
-
-        test_tensor2 = test_tensor.multiply(&test_tensor2);
-        for i in 0..test_tensor2.rows() {
-            for j in 0..test_tensor2.cols() {
-                if i == j && test_tensor2[i][j] != 4.0 {
-                    returnValue = false;
-                }
-            }
-        }
-        // test load:
-        let mut test_load = Rank2Tensor::new(0,0);
-        test_load.load_arff(String::from("iris.arff"));
-
-        returnValue
-    }
 }
 
 /// Immutable Index
@@ -450,5 +416,54 @@ impl Index<u64> for Rank2Tensor {
 impl IndexMut<u64> for Rank2Tensor {
     fn index_mut<'a>(&'a mut self, _index: u64) -> &'a mut Rank1Tensor {
         &mut self.m_data[_index]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Rank2Tensor;
+
+    #[test]
+    pub fn rank2_tensor_identity() {
+        let mut returnValue = true;
+        let mut test_tensor = Rank2Tensor::new(5, 5);
+
+        test_tensor.identity();
+        for i in 0..test_tensor.rows() {
+            for j in 0..test_tensor.cols() {
+                if i == j  {
+                    assert!(test_tensor[i][j] == 1.0, "Rank 2 Tensor Identity is broken.");
+                }
+                else {
+                    assert!(test_tensor[i][j] == 0.0, "Rank 2 Tensor Identity is broken.");
+                }
+            }
+        }
+    }
+
+    #[test]
+    pub fn rank2_tensor_multiply() {
+        let mut test_tensor = Rank2Tensor::new(5, 5);
+        test_tensor.identity();
+        test_tensor.scale(2.0);
+        let mut test_tensor2 = Rank2Tensor::new(5,5);
+        test_tensor2.identity();
+        test_tensor2.scale(2.0);
+
+        test_tensor = test_tensor.multiply(&test_tensor2);
+        for i in 0..test_tensor.rows() {
+            for j in 0..test_tensor.cols() {
+                if i == j {
+                    assert!(test_tensor[i][j] == 4.0, "Rank 2 Tensor Multiply is broken.");
+                }
+            }
+        }
+    }
+
+    #[test]
+    pub fn rank2_tensor_load_arff() {
+        let mut test_load = Rank2Tensor::new(0,0);
+        test_load.load_arff(String::from("iris.arff"));
+        assert!(test_load[0][0] == 5.1, "Rank 2 Tensor Load Arff is broken.");
     }
 }

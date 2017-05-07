@@ -1,7 +1,7 @@
 // use tensor::traits;
 // pub mod Rank1Tensor;
 use std::cmp;
-use std::ops::{Add, Mul, Index, IndexMut};
+use std::ops::{Index, IndexMut};
 use Tensor::Vector;
 
 #[derive(Clone, Debug)]
@@ -20,7 +20,6 @@ impl Rank1Tensor {
     }
 
     pub fn resize(&mut self, size: u64) {
-        assert!(size >= 0, "You cannot resize a Rank1Tensor to have a negative size.");
         self.m_data.resize(size, 0.0);
     }
 
@@ -75,7 +74,7 @@ impl Rank1Tensor {
     pub fn copy_slice(&mut self, other: &Rank1Tensor, start_position: u64, end_position: Option<u64>)
     {
         assert!(other.size() > start_position, "You can't start a position that is outside the bounds of the other tensor.");
-        let mut target_size = 0;
+        let target_size: u64;
         if end_position.is_none() {
             target_size = cmp::min(self.m_size, other.size() - start_position);
         }
@@ -115,7 +114,7 @@ impl Rank1Tensor {
     }
 
     pub fn set(&mut self, indices: u64, value: f64) {
-        if indices >= 0 && indices < self.size() {
+        if indices < self.size() {
             self.m_data[indices] = value;
         }
     }
@@ -151,9 +150,6 @@ impl Rank1Tensor {
         for i in 0..self.m_size {
             self.m_data[i] *= scalar;
         }
-        // for i in 0..self.data.size() {
-        //     self.data[i] *= scalar;
-        // }
     }
 
     pub fn multiply(&self, other: &Rank1Tensor, result: &mut Rank1Tensor) {
@@ -173,31 +169,6 @@ impl Rank1Tensor {
         }
         println!("");
     }
-
-    /// Test Function for Rank1Tensor:
-    pub fn test() -> bool {
-        let mut returnValue = true;
-        let mut test_tensor = Rank1Tensor::new(5);
-        for i in 0..test_tensor.size() {
-            if test_tensor.get(i) != 0.0 {
-                returnValue = false;
-            }
-        }
-
-        for i in 0..test_tensor.size() {
-            test_tensor.set(i, (i as f64) + 1.0);
-        }
-
-        // scale tensor:
-        test_tensor.scale(2.0);
-        for i in 0..test_tensor.size() {
-            if test_tensor.get(i) != ((i as f64) + 1.0) * 2.0 {
-                returnValue = false;
-            }
-        }
-
-        returnValue
-    }
 }
 
 //IMPLEMENTATIONS
@@ -214,13 +185,31 @@ impl IndexMut<u64> for Rank1Tensor {
         &mut self.m_data[_index]
     }
 }
-// Clone trait
-// impl Clone for Rank1Tensor {
-//     fn clone(&self) -> Rank1Tensor {
-//         *self
-//     }
-// }
 
-// impl Mul<Rank1Tensor> for Rank1Tensor {
-//
-// }
+#[cfg(test)]
+mod tests {
+    use super::Rank1Tensor;
+
+    #[test]
+    pub fn rank1_tensor_new() {
+        let mut test_tensor = Rank1Tensor::new(5);
+        for i in 0..test_tensor.size() {
+            assert!(test_tensor[i] == 0.0, "Rank 1 Tensor new method is broken.");
+        }
+    }
+
+    #[test]
+    pub fn rank1_tensor_scale() {
+        let mut test_tensor = Rank1Tensor::new(5);
+        for i in 0..test_tensor.size() {
+            test_tensor.set(i, (i as f64) + 1.0);
+        }
+
+        // scale tensor:
+        test_tensor.scale(2.0);
+        for i in 0..test_tensor.size() {
+            assert!(test_tensor.get(i) ==  ((i as f64) + 1.0) * 2.0,
+                    "Rank 1 Tensor scale broken.");
+        }
+    }
+}
