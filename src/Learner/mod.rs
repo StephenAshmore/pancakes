@@ -10,10 +10,3 @@ mod layer;
 mod learnertraits;
 mod activation_layer;
 
-pub fn Test() {
-    // assert!(NeuralBlock::test(), "Neural Block Test Failed!");
-
-
-    assert!(NeuralNetwork::test(), "Neural Network Test Failed!");
-
-}

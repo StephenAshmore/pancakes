@@ -28,16 +28,16 @@ impl IsCostFunction for SSE {
         target.sub_square(prediction)
     }
 }
-pub struct difference{}
-impl difference {
-    pub fn new() -> difference {
-        difference { }
+pub struct SimpleDifference{}
+impl SimpleDifference {
+    pub fn new() -> SimpleDifference {
+        SimpleDifference { }
     }
 }
 
 
 // Should return a single SSE number, or a rank1tensor?
-impl IsCostFunction for difference {
+impl IsCostFunction for SimpleDifference {
     fn evaluate(&self, target: f64, prediction: f64) -> f64 {
         (target - prediction)
     }

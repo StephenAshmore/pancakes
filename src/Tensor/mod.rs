@@ -7,9 +7,3 @@ mod rank1Tensor;
 mod rank2Tensor;
 mod vector;
 mod iterator;
-
-pub fn Test() {
-    assert!(Rank1Tensor::test(), "Tensor Rank One Test Failed.");
-
-    assert!(Rank2Tensor::test(), "Tensor Rank Two Test Failed.");
-}

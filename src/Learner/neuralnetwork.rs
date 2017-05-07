@@ -150,132 +150,7 @@ impl NeuralNetwork {
         self.m_layer_output_counts[layer_number]
     }
 
-    pub fn test() -> bool {
-        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
 
-        // Not the most pleasant syntax for moving a trait object.
-        nn.add(Box::new(Layer::new(3)) as Box<Differentiable>);
-        nn.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
-        nn.add(Box::new(Layer::new(2)) as Box<Differentiable>);
-        nn.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
-        //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
-
-        // test code:
-        let mut layer1_weights = Rank2Tensor::new(3,2);
-        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;
-        layer1_weights[1][0] = 0.0;layer1_weights[1][1] = 0.0;
-        layer1_weights[2][0] = 0.1;layer1_weights[2][1] = -0.1;
-        let mut layer1_bias = Rank2Tensor::new(1,3);
-        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = 0.1;layer1_bias[0][2] = 0.0;
-
-        let mut layer2_weights = Rank2Tensor::new(2, 3);
-        layer2_weights[0][0] = 0.1;layer2_weights[0][1] = 0.1;layer2_weights[0][2] = 0.1;
-        layer2_weights[1][0] = 0.1;layer2_weights[1][1] = 0.3;layer2_weights[1][2] = -0.1;
-        let mut layer2_bias = Rank2Tensor::new(1, 2);
-        layer2_bias[0][0] = 0.1;layer2_bias[0][1] = -0.2;
-
-        // set weights of the two layers:
-        let mut layer1_vec = Vec::new();
-        layer1_vec.push(layer1_weights);layer1_vec.push(layer1_bias);
-        let mut layer2_vec = Vec::new();
-        layer2_vec.push(layer2_weights);layer2_vec.push(layer2_bias);
-
-        // validate neural network:
-        nn.validate(2);
-
-        nn.get_block(0,0).set_weights(&layer1_vec);
-        nn.get_block(2,0).set_weights(&layer2_vec);//skip activation layer
-
-        let mut features = Rank2Tensor::new(1, 2);
-        features[0][0] = 0.3;
-        features[0][1] = -0.2;
-
-        // test feed forward!
-        let mut labels = Rank2Tensor::new(1, 2);
-        labels[0][0] = 0.1; labels[0][1] = 0.0;
-
-        let mut prediction = Rank1Tensor::new(labels.cols());
-        // set the weights of the network:
-
-        nn.forward(&features[0], &mut prediction);
-        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
-        // println!("Final prediction: {:?}", prediction);
-        let mut correct_pred = Rank1Tensor::new(2);
-        correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
-        if !prediction.fuzzy_equals(&correct_pred) {
-            println!("Failed: Forward did not result in the correct prediction.");
-            return false
-        }
-
-        let mut input_error = Rank1Tensor::new(nn.inputs());
-        nn.backprop(&error, &mut input_error);
-
-        let mut layer1_gradient = nn.m_blocks[0][0].first_gradient();
-        let mut layer2_gradient = nn.m_blocks[2][0].first_gradient();
-
-        // iterate through all blocks, call update on them.
-        for i in 0..nn.layers() {
-            for j in 0..nn.m_blocks[i as usize].len() {
-                nn.m_blocks[i as usize][j as usize].update(&mut nn.m_optimizer);
-            }
-        }
-
-        correct_pred[0] = 0.12318119206528; correct_pred[1] = -0.14502768344823;
-        nn.forward(&features[0], &mut prediction);
-        if !prediction.fuzzy_equals(&correct_pred) {
-            println!("Failed: Forward did not result in the correct prediction.");
-        }
-
-        // test loading iris:
-        let mut iris = Rank2Tensor::new(0,0);
-        iris.load_arff("iris.arff".to_string());
-        iris.shuffle();
-
-        // TODO: Copy portion failing?
-        let mut train_features = iris.copy_portion(0, 0, iris.rows() * 2 / 3, 4);
-        let mut train_labels = iris.copy_portion(0, 4, iris.rows() * 2 / 3, 1);
-        let mut test_features = iris.copy_portion(iris.rows() * 2 /3, 0, iris.rows() * 1 / 3, 4);
-        let mut test_labels = iris.copy_portion(iris.rows() * 2 /3, 4, iris.rows() * 1 / 3, 1);
-        // println!("Train features rows,cols: {},{}", train_features.rows(), train_features.cols());
-        // println!("Train labels rows,cols: {},{}", train_labels.rows(), train_labels.cols());
-        // println!("Test features rows,cols: {},{}", test_features.rows(), test_features.cols());
-        // println!("Test labels rows,cols: {},{}", test_labels.rows(), test_labels.cols());
-
-        // Test on iris dataset:
-        let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.05))) as Box<Optimizer>, Box::new(difference::new()) as Box<IsCostFunction>);
-        nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
-        nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
-        nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
-        nn2.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
-        nn2.add(Box::new(Layer::new(1)) as Box<Differentiable>);
-
-        nn2.train(&train_features, &train_labels);
-
-        // validate on test set
-        let mut test_prediction = Rank1Tensor::new(test_labels.cols());
-        let sse_func = SSE::new();
-        let mut error = 0.0;
-        let mut correct = 0; let mut total = test_features.rows();
-        let mut rng = rand::thread_rng();
-        let range = Range::new(0, test_features.rows());
-        let mut rand_index = 0;
-        for i in 0..test_features.rows() {
-            rand_index = range.ind_sample(&mut rng);
-            nn2.forward(&test_features[i], &mut test_prediction);
-            let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
-            error += temp_error[0];
-            if test_prediction[0].round() == test_labels[i][0] {
-                correct += 1;
-            }
-            println!("Prediction: {} versus target: {}", test_prediction[0].round(), test_labels[i][0]);
-        }
-        println!("Accuracy: {}, correct: {}, total: {}", correct / total, correct, total);
-        println!("SSE: {}", error);
-        if correct < 40 {
-            return false
-        }
-        true
-    }
 }
 
 impl Differentiable for NeuralNetwork {
@@ -402,5 +277,196 @@ impl Differentiable for NeuralNetwork {
 
     fn backpropBatch(&mut self) {
 
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::NeuralNetwork;
+    use super::GradientDescent;
+    use super::Rank2Tensor;
+    use super::Rank1Tensor;
+    use super::Layer;
+    use super::Optimizer;
+    use super::SimpleDifference;
+    use super::Differentiable;
+    use super::TanH;
+    use super::Activation_Layer;
+    use super::IsCostFunction;
+    use super::rand;
+    use rand::distributions::{Range, IndependentSample};
+    use super::SSE;
+
+
+    #[test]
+    pub fn neural_network_forward_prop() {
+        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(SimpleDifference::new()) as Box<IsCostFunction>);
+
+        // Not the most pleasant syntax for moving a trait object.
+        nn.add(Box::new(Layer::new(3)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
+        nn.add(Box::new(Layer::new(2)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
+        //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
+
+        // test code:
+        let mut layer1_weights = Rank2Tensor::new(3,2);
+        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;
+        layer1_weights[1][0] = 0.0;layer1_weights[1][1] = 0.0;
+        layer1_weights[2][0] = 0.1;layer1_weights[2][1] = -0.1;
+        let mut layer1_bias = Rank2Tensor::new(1,3);
+        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = 0.1;layer1_bias[0][2] = 0.0;
+
+        let mut layer2_weights = Rank2Tensor::new(2, 3);
+        layer2_weights[0][0] = 0.1;layer2_weights[0][1] = 0.1;layer2_weights[0][2] = 0.1;
+        layer2_weights[1][0] = 0.1;layer2_weights[1][1] = 0.3;layer2_weights[1][2] = -0.1;
+        let mut layer2_bias = Rank2Tensor::new(1, 2);
+        layer2_bias[0][0] = 0.1;layer2_bias[0][1] = -0.2;
+
+        // set weights of the two layers:
+        let mut layer1_vec = Vec::new();
+        layer1_vec.push(layer1_weights);layer1_vec.push(layer1_bias);
+        let mut layer2_vec = Vec::new();
+        layer2_vec.push(layer2_weights);layer2_vec.push(layer2_bias);
+
+        // validate neural network:
+        nn.validate(2);
+
+        nn.get_block(0,0).set_weights(&layer1_vec);
+        nn.get_block(2,0).set_weights(&layer2_vec);//skip activation layer
+
+        let mut features = Rank2Tensor::new(1, 2);
+        features[0][0] = 0.3;
+        features[0][1] = -0.2;
+
+        // test feed forward!
+        let mut labels = Rank2Tensor::new(1, 2);
+        labels[0][0] = 0.1; labels[0][1] = 0.0;
+
+        let mut prediction = Rank1Tensor::new(labels.cols());
+        // set the weights of the network:
+
+        nn.forward(&features[0], &mut prediction);
+        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
+        // println!("Final prediction: {:?}", prediction);
+        let mut correct_pred = Rank1Tensor::new(2);
+        correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
+        assert!(prediction.fuzzy_equals(&correct_pred),
+                "Failed: Forward did not result in the correct prediction.");
+    }
+
+    #[test]
+    pub fn neural_network_back_prop() {
+        let mut nn = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.1))) as Box<Optimizer>, Box::new(SimpleDifference::new()) as Box<IsCostFunction>);
+
+        // Not the most pleasant syntax for moving a trait object.
+        nn.add(Box::new(Layer::new(3)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
+        nn.add(Box::new(Layer::new(2)) as Box<Differentiable>);
+        nn.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
+        //nn.concat(Box::new(Layer::new(6, Identity::new())) as Box<Differentiable>);
+
+        // test code:
+        let mut layer1_weights = Rank2Tensor::new(3,2);
+        layer1_weights[0][0] = 0.1;layer1_weights[0][1] = 0.1;
+        layer1_weights[1][0] = 0.0;layer1_weights[1][1] = 0.0;
+        layer1_weights[2][0] = 0.1;layer1_weights[2][1] = -0.1;
+        let mut layer1_bias = Rank2Tensor::new(1,3);
+        layer1_bias[0][0] = 0.1;layer1_bias[0][1] = 0.1;layer1_bias[0][2] = 0.0;
+
+        let mut layer2_weights = Rank2Tensor::new(2, 3);
+        layer2_weights[0][0] = 0.1;layer2_weights[0][1] = 0.1;layer2_weights[0][2] = 0.1;
+        layer2_weights[1][0] = 0.1;layer2_weights[1][1] = 0.3;layer2_weights[1][2] = -0.1;
+        let mut layer2_bias = Rank2Tensor::new(1, 2);
+        layer2_bias[0][0] = 0.1;layer2_bias[0][1] = -0.2;
+
+        // set weights of the two layers:
+        let mut layer1_vec = Vec::new();
+        layer1_vec.push(layer1_weights);layer1_vec.push(layer1_bias);
+        let mut layer2_vec = Vec::new();
+        layer2_vec.push(layer2_weights);layer2_vec.push(layer2_bias);
+
+        // validate neural network:
+        nn.validate(2);
+
+        nn.get_block(0,0).set_weights(&layer1_vec);
+        nn.get_block(2,0).set_weights(&layer2_vec);//skip activation layer
+
+        let mut features = Rank2Tensor::new(1, 2);
+        features[0][0] = 0.3;
+        features[0][1] = -0.2;
+
+        // test feed forward!
+        let mut labels = Rank2Tensor::new(1, 2);
+        labels[0][0] = 0.1; labels[0][1] = 0.0;
+
+        let mut prediction = Rank1Tensor::new(labels.cols());
+        // set the weights of the network:
+
+        nn.forward(&features[0], &mut prediction);
+        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
+        // println!("Final prediction: {:?}", prediction);
+        let mut correct_pred = Rank1Tensor::new(2);
+        correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
+
+        let mut input_error = Rank1Tensor::new(nn.inputs());
+        nn.backprop(&error, &mut input_error);
+
+        let mut layer1_gradient = nn.m_blocks[0][0].first_gradient();
+        let mut layer2_gradient = nn.m_blocks[2][0].first_gradient();
+
+        // iterate through all blocks, call update on them.
+        for i in 0..nn.layers() {
+            for j in 0..nn.m_blocks[i as usize].len() {
+                nn.m_blocks[i as usize][j as usize].update(&mut nn.m_optimizer);
+            }
+        }
+
+        correct_pred[0] = 0.12318119206528; correct_pred[1] = -0.14502768344823;
+        nn.forward(&features[0], &mut prediction);
+        assert!(prediction.fuzzy_equals(&correct_pred),
+                "Failed: Forward did not result in the correct prediction.");
+    }
+
+    #[test]
+    pub fn neural_network_train() {
+        // Test on iris dataset:
+        let mut iris = Rank2Tensor::new(0,0);
+        iris.load_arff("iris.arff".to_string());
+        iris.shuffle();
+
+        let mut train_features = iris.copy_portion(0, 0, iris.rows() * 2 / 3, 4);
+        let mut train_labels = iris.copy_portion(0, 4, iris.rows() * 2 / 3, 1);
+        let mut test_features = iris.copy_portion(iris.rows() * 2 /3, 0, iris.rows() * 1 / 3, 4);
+        let mut test_labels = iris.copy_portion(iris.rows() * 2 /3, 4, iris.rows() * 1 / 3, 1);
+
+        let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.05))) as Box<Optimizer>, Box::new(SimpleDifference::new()) as Box<IsCostFunction>);
+        nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
+        nn2.add(Box::new(Layer::new(1)) as Box<Differentiable>);
+
+        nn2.train(&train_features, &train_labels);
+
+        // validate on test set
+        let mut test_prediction = Rank1Tensor::new(test_labels.cols());
+        let sse_func = SSE::new();
+        let mut error = 0.0;
+        let mut correct = 0; let mut total = test_features.rows();
+        let mut rng = rand::thread_rng();
+        let range = Range::new(0, test_features.rows());
+        let mut rand_index = 0;
+        for i in 0..test_features.rows() {
+            rand_index = range.ind_sample(&mut rng);
+            nn2.forward(&test_features[i], &mut test_prediction);
+            let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
+            error += temp_error[0];
+            if test_prediction[0].round() == test_labels[i][0] {
+                correct += 1;
+            }
+        }
+
+        assert!(correct >= 44, format!("Neural Network could not achieve good accuracy on iris. Correct: {} out of {}", correct, test_features.rows()));
     }
 }
