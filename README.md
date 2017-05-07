@@ -1,7 +1,8 @@
 # Pancakes
 
 Pancakes is a neural networks library built in Rust.
-Pancakes is a thinner version of Waffles. It is a neural network
+Pancakes was originally designed to be a thinner version of waffles, written in rust.
+It now is a neural network library focusing on modular neural networks.
 
 ## Install
 - Install Rust
