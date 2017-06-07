@@ -13,6 +13,9 @@ use Tensor::Iterator;
 use rand;
 use rand::distributions::{Range, IndependentSample};
 
+extern crate indicatif;
+use self::indicatif::{ProgressBar, ProgressStyle};
+
 pub struct NeuralNetwork {
     m_blocks: Vec<Vec<Box<Differentiable>>>,
     m_layer_count: u64,
@@ -134,6 +137,51 @@ impl NeuralNetwork {
                 }
             }
         }
+    }
+
+    pub fn train_notifier(&mut self, features: &Rank2Tensor, labels: &Rank2Tensor)
+    {
+        if !self.m_ready {
+            self.validate(features.cols());
+        }
+        assert!(self.m_inputs == features.cols(), "Features must have the same number of columns as the number of inputs to the neural network.");
+        assert!(self.m_outputs == labels.cols(), "Labels must have the same number of columns as the number of outputs to the neural network.");
+
+
+        let bar = ProgressBar::new(200);
+        bar.set_style(ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+            .progress_chars("##-"));
+        // iterate until fully trained
+        // TODO: implement code to stop once convergence ends.
+        // while !self.converged() {
+        let mut iterator = Iterator::new(features.rows());
+        let mut row: u64;
+        for epoch in 0..200
+        {
+            bar.inc(1);
+            iterator.reset();
+            while iterator.has_next()
+            {
+                row = iterator.next();
+                let mut prediction = Rank1Tensor::new(self.m_outputs);
+
+                self.forward(&features[row], &mut prediction);
+
+                // calculate error of network:
+                let error = self.m_cost_function.evaluate_rank1(&labels[row], &prediction);
+
+                let mut next_error = Rank1Tensor::new(self.inputs());
+                self.backprop(&error, &mut next_error); // next_error unused
+
+                for i in 0..self.m_layer_count {
+                    for j in 0..self.m_blocks[i as usize].len() {
+                        self.m_blocks[i as usize][j as usize].update(&mut self.m_optimizer);
+                    }
+                }
+            }
+        }
+        bar.finish();
     }
 
     pub fn test(&mut self, features: &Rank2Tensor, labels: &Rank2Tensor) -> u64
