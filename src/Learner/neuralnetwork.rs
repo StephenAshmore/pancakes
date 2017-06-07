@@ -81,7 +81,7 @@ impl NeuralNetwork {
         for i in 0..self.m_blocks.len() {
             current_outputs = 0;
             for j in 0..self.m_blocks[i].len() {
-                self.m_blocks[i as usize][j as usize].setInputs(current_inputs);
+                self.m_blocks[i as usize][j as usize].set_inputs(current_inputs);
                 current_outputs += self.m_blocks[i as usize][j as usize].outputs();
             }
             current_inputs = current_outputs;
@@ -92,6 +92,7 @@ impl NeuralNetwork {
         self.m_ready = true;
     }
 
+    // TODO: Write convergence method
     // pub fn converged() {
 
     // }
@@ -109,8 +110,8 @@ impl NeuralNetwork {
         // TODO: implement code to stop once convergence ends.
         // while !self.converged() {
         let mut iterator = Iterator::new(features.rows());
-        let mut row = 0;
-        for i in 0..2000
+        let mut row: u64;
+        for epoch in 0..200
         {
             iterator.reset();
             while iterator.has_next()
@@ -121,7 +122,7 @@ impl NeuralNetwork {
                 self.forward(&features[row], &mut prediction);
 
                 // calculate error of network:
-                let mut error = self.m_cost_function.evaluateRank1(&labels[row], &prediction);
+                let error = self.m_cost_function.evaluate_rank1(&labels[row], &prediction);
 
                 let mut next_error = Rank1Tensor::new(self.inputs());
                 self.backprop(&error, &mut next_error); // next_error unused
@@ -135,6 +136,24 @@ impl NeuralNetwork {
         }
     }
 
+    pub fn test(&mut self, features: &Rank2Tensor, labels: &Rank2Tensor) -> u64
+    {
+        let mut test_prediction = Rank1Tensor::new(labels.cols());
+        let mut rng = rand::thread_rng();
+        let mut correct = 0;
+        let range = Range::new(0, features.rows());
+        let mut rand_index = 0;
+        for i in 0..features.rows() {
+            rand_index = range.ind_sample(&mut rng);
+            self.forward(&features[i], &mut test_prediction);
+            if test_prediction[0].round() == labels[i][0] {
+                correct += 1;
+            }
+        }
+
+        return correct;
+    }
+
     pub fn layers(&self) -> u64
     {
         self.m_layer_count
@@ -142,9 +161,12 @@ impl NeuralNetwork {
 
     pub fn output_at_layer_count(&self, layer_number: u64) -> u64
     {
-        assert!(self.m_ready, "You cannot get the output at a layer without first validating the neural network!"); // this assert may change to allow this function to call validate.
+        assert!(self.m_ready,
+                "You cannot get the output at a layer without first validating the neural network!");
+                // this assert may change to allow this function to call validate.
 
-        assert!((layer_number >= 0 && layer_number < self.m_layer_count), "You cannot get the layer count for a layer that does not exist.");
+        assert!(layer_number < self.m_layer_count,
+                "You cannot get the layer count for a layer that does not exist.");
 
         self.m_layer_output_counts[layer_number]
     }
@@ -161,12 +183,13 @@ impl Differentiable for NeuralNetwork {
         self.m_outputs
     }
 
-    fn setInputs(&mut self, new_inputs: u64)
+    fn set_inputs(&mut self, new_inputs: u64)
     {
         self.m_inputs = new_inputs;
         self.validate(new_inputs);
     }
 
+    #[warn(unused_variables)]
     fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
     {
         // This one will be a bit more complicated to handle.
@@ -268,11 +291,11 @@ impl Differentiable for NeuralNetwork {
     }
 
 
-    fn forwardBatch(&mut self, features: Rank2Tensor) {
+    fn forward_batch(&mut self, features: Rank2Tensor) {
 
     }
 
-    fn backpropBatch(&mut self) {
+    fn backprop_batch(&mut self) {
 
     }
 }
@@ -344,7 +367,7 @@ mod tests {
         // set the weights of the network:
 
         nn.forward(&features[0], &mut prediction);
-        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
+        let mut error = nn.m_cost_function.evaluate_rank1(&labels[0], &prediction);
         // println!("Final prediction: {:?}", prediction);
         let mut correct_pred = Rank1Tensor::new(2);
         correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
@@ -401,7 +424,7 @@ mod tests {
         // set the weights of the network:
 
         nn.forward(&features[0], &mut prediction);
-        let mut error = nn.m_cost_function.evaluateRank1(&labels[0], &prediction);
+        let mut error = nn.m_cost_function.evaluate_rank1(&labels[0], &prediction);
         // println!("Final prediction: {:?}", prediction);
         let mut correct_pred = Rank1Tensor::new(2);
         correct_pred[0] = 0.12525717909304; correct_pred[1] = -0.16268123406035;
@@ -438,10 +461,10 @@ mod tests {
         let mut test_labels = iris.copy_portion(iris.rows() * 2 /3, 4, iris.rows() * 1 / 3, 1);
 
         let mut nn2 = NeuralNetwork::new(Box::new(GradientDescent::new(Some(0.05))) as Box<Optimizer>, Box::new(SimpleDifference::new()) as Box<IsCostFunction>);
+        nn2.add(Box::new(Layer::new(16)) as Box<Differentiable>);
+        nn2.add(Box::new(Activation_Layer::new(16, TanH::new())) as Box<Differentiable>);
         nn2.add(Box::new(Layer::new(3)) as Box<Differentiable>);
         nn2.add(Box::new(Activation_Layer::new(3, TanH::new())) as Box<Differentiable>);
-        nn2.add(Box::new(Layer::new(2)) as Box<Differentiable>);
-        nn2.add(Box::new(Activation_Layer::new(2, TanH::new())) as Box<Differentiable>);
         nn2.add(Box::new(Layer::new(1)) as Box<Differentiable>);
 
         nn2.train(&train_features, &train_labels);
@@ -457,13 +480,13 @@ mod tests {
         for i in 0..test_features.rows() {
             rand_index = range.ind_sample(&mut rng);
             nn2.forward(&test_features[i], &mut test_prediction);
-            let temp_error = sse_func.evaluateRank1(&test_labels[i], &test_prediction);
+            let temp_error = sse_func.evaluate_rank1(&test_labels[i], &test_prediction);
             error += temp_error[0];
             if test_prediction[0].round() == test_labels[i][0] {
                 correct += 1;
             }
         }
 
-        assert!(correct >= 44, format!("Neural Network could not achieve good accuracy on iris. Correct: {} out of {}", correct, test_features.rows()));
+        assert!(correct >= 48, format!("Neural Network could not achieve great accuracy on iris. Correct: {} out of {}", correct, total));
     }
 }

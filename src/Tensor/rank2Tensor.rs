@@ -160,7 +160,7 @@ impl Rank2Tensor {
     pub fn copy_portion(&self, start_row: u64, start_column: u64, count_rows: u64, count_columns: u64) -> Rank2Tensor
     {
         assert!(count_columns <= self.cols() && start_column < self.cols(), "You can't copy columns that are smaller than the number of columns in a Rank2Tensor!");
-        assert!(count_rows < self.rows() && start_row < self.rows(), "You can't copy rows that are smaller than the number of rows in a Rank2Tensor!");
+        assert!(count_rows <= self.rows() && start_row < self.rows(), "You can't copy rows that are smaller than the number of rows in a Rank2Tensor!");
 
         let mut result_tensor = Rank2Tensor::new(count_rows, count_columns);
 

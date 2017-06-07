@@ -43,7 +43,7 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
         self.m_outputs
     }
 
-    fn setInputs(&mut self, new_inputs: u64)
+    fn set_inputs(&mut self, new_inputs: u64)
     {
         self.m_inputs = new_inputs;
     }
@@ -66,14 +66,14 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
             "The input Rank1Tensor must be the same size as the number of inputs in this layer!");
 
         self.m_net_input.copy(&input);
-        self.m_activation.evaluateRank1(&self.m_net_input, prediction);
+        self.m_activation.evaluate_rank1(&self.m_net_input, prediction);
     }
 
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor) {
         // unsquash can be done all in one step??
         let mut unsquash = Rank1Tensor::new(self.m_outputs);
         // unsquash net input, and multiply by the previous_error:
-        self.m_activation.derivativeRank1(&self.m_net_input, &mut unsquash);
+        self.m_activation.derivative_rank1(&self.m_net_input, &mut unsquash);
 
         unsquash.multiply(previous_error, &mut self.m_gradient);
 
@@ -88,11 +88,11 @@ impl<T: IsFunction> Differentiable for Activation_Layer<T> {
     }
 
 
-    fn forwardBatch(&mut self, features: Rank2Tensor) {
+    fn forward_batch(&mut self, features: Rank2Tensor) {
 
     }
 
-    fn backpropBatch(&mut self) {
+    fn backprop_batch(&mut self) {
 
     }
 

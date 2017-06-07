@@ -7,13 +7,13 @@ pub trait Differentiable {
     fn forward<'a>(&'a mut self, input: &Rank1Tensor, prediction: &'a mut Rank1Tensor);
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor);
 
-    fn forwardBatch(&mut self, inputs: Rank2Tensor);
-    fn backpropBatch(&mut self);
+    fn forward_batch(&mut self, inputs: Rank2Tensor);
+    fn backprop_batch(&mut self);
 
     fn inputs(&self) -> u64;
     fn outputs(&self) -> u64;
 
-    fn setInputs(&mut self, new_inputs: u64);
+    fn set_inputs(&mut self, new_inputs: u64);
     fn set_weights(&mut self, weights: &Vec<Rank2Tensor>);
 
     fn update(&mut self, optimizer: &mut Box<Optimizer>);

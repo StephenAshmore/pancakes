@@ -56,7 +56,7 @@ impl Differentiable for Layer {
         self.m_outputs
     }
 
-    fn setInputs(&mut self, new_inputs: u64)
+    fn set_inputs(&mut self, new_inputs: u64)
     {
         self.m_inputs = new_inputs;
         self.m_weights.resize_columns(self.m_inputs);
@@ -78,8 +78,10 @@ impl Differentiable for Layer {
 
     fn set_weights(&mut self, weights: &Vec<Rank2Tensor>)
     {
-        assert!(weights.len() > 1, "You can't set weights using an empty vector, you must include the bias as the second Rank2Tensor.");
-        assert!(weights[0].rows() == self.m_weights.rows(), "Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
+        assert!(weights.len() > 1,
+                "You can't set weights using an empty vector, you must include the bias as the second Rank2Tensor.");
+        assert!(weights[0].rows() == self.m_weights.rows(),
+                "set_weights expected to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
         assert!(weights[0].cols() == self.m_weights.cols(),"Set the weights expects to have already had the layer be resized appropriately to the data. Make sure that your weights are the correct size.");
         self.m_weights.copy(&weights[0]);
         self.m_bias.copy(&weights[1][0]);
@@ -104,14 +106,6 @@ impl Differentiable for Layer {
         prediction.copy(&self.m_net_input);
     }
 
-// the gradient tensor should be of the same size as the number of weights.
-// Shouldn't it be a rank2tensor because the gradient specifies how each of the weights/parameters
-// change?
-
-// ehhhhh this should be different. see backprop step: http://uaf46365.ddns.uark.edu/ml/a4/instructions.html
-// this step for fully connected layers should multiply the weights by the previous error.
-// it should multiply them in such a way that results in a rank1tensor, where each entry
-// is the gradient/blame for the next layer.
     fn backprop(&mut self, previous_error: &Rank1Tensor, error: &mut Rank1Tensor)
     {
         self.m_gradient.copy(previous_error);
@@ -124,11 +118,11 @@ impl Differentiable for Layer {
         optimizer.optimize(&mut self.m_weights, &mut self.m_bias, &mut self.m_input, &self.m_gradient);
     }
 
-    fn forwardBatch(&mut self, features: Rank2Tensor) {
+    fn forward_batch(&mut self, features: Rank2Tensor) {
 
     }
 
-    fn backpropBatch(&mut self) {
+    fn backprop_batch(&mut self) {
 
     }
 

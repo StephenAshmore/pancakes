@@ -4,7 +4,3 @@ pub use self::functions::*;
 pub mod functiontraits;
 pub mod costfunctions;
 pub mod functions;
-
-pub fn Test() {
-
-}

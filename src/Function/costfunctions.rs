@@ -16,7 +16,7 @@ impl IsCostFunction for SSE {
         (target - prediction) * (target - prediction)
     }
 
-    fn evaluateRank1(&self, target: &Rank1Tensor, prediction: &Rank1Tensor) -> Rank1Tensor {
+    fn evaluate_rank1(&self, target: &Rank1Tensor, prediction: &Rank1Tensor) -> Rank1Tensor {
         target.sub_square(prediction)
     }
 
@@ -24,7 +24,7 @@ impl IsCostFunction for SSE {
     // Essentially a cost function will take a target vector and a prediction Vector
     // This evaluateRank2 will be used for batch training, so maybe it should be named
     // more appropriately?
-    fn evaluateRank2(&self, target: &Rank2Tensor, prediction: &Rank2Tensor) -> Rank2Tensor {
+    fn evaluate_rank2(&self, target: &Rank2Tensor, prediction: &Rank2Tensor) -> Rank2Tensor {
         target.sub_square(prediction)
     }
 }
@@ -42,7 +42,7 @@ impl IsCostFunction for SimpleDifference {
         (target - prediction)
     }
 
-    fn evaluateRank1(&self, target: &Rank1Tensor, prediction: &Rank1Tensor) -> Rank1Tensor {
+    fn evaluate_rank1(&self, target: &Rank1Tensor, prediction: &Rank1Tensor) -> Rank1Tensor {
         target.sub(prediction)
     }
 
@@ -50,7 +50,7 @@ impl IsCostFunction for SimpleDifference {
     // Essentially a cost function will take a target vector and a prediction Vector
     // This evaluateRank2 will be used for batch training, so maybe it should be named
     // more appropriately?
-    fn evaluateRank2(&self, target: &Rank2Tensor, prediction: &Rank2Tensor) -> Rank2Tensor {
+    fn evaluate_rank2(&self, target: &Rank2Tensor, prediction: &Rank2Tensor) -> Rank2Tensor {
         target.sub(prediction)
     }
 }
